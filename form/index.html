@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FFF6F4">
+<title>Order form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap">
+<style>
+/* Customer-facing: soft rose paper, plum ink, one green action. Built for a phone held in one hand. */
+:root{--paper:#FFF6F4;--card:#FFFFFF;--ink:#2E1A28;--plum:#5B2A4A;--muted:#7A6670;--line:#EADDE0;--rose:#F3D9DE;--ok:#16794A;--bad:#B42318;--wa:#25D366;
+  --display:"Fraunces",Georgia,serif;--body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.logo{font-family:var(--display);font-weight:600;font-size:1.35rem;color:var(--plum);letter-spacing:-.01em}
+.logo span{color:var(--muted);font-weight:500}
+.safe{font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+h1{font-family:var(--display);font-weight:500;font-size:2rem;line-height:1.1;margin:0 0 6px;letter-spacing:-.01em;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
+.sum h2{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:800}
+.sum ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sum li{display:flex;justify-content:space-between;gap:12px}
+.sum .tot{display:flex;justify-content:space-between;border-top:1px dashed var(--line);margin-top:10px;padding-top:10px;font-weight:800;font-size:1.1rem}
+.sec{display:flex;align-items:center;gap:10px;font-family:var(--body);font-size:1.05rem;font-weight:800;margin:0 0 14px}
+.sec span{width:28px;height:28px;border-radius:50%;background:var(--plum);color:#fff;display:grid;place-items:center;font-size:.85rem}
+.bchips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.bchips button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer}
+.bchips button[aria-pressed="true"]{background:var(--plum);border-color:var(--plum);color:#fff}
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.plist li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:16px;padding:12px 12px 12px 14px;background:#FFFCFB}
+.plist li.on{border-color:var(--plum);background:#fff;box-shadow:0 0 0 3px rgba(91,42,74,.08)}
+.plist b{display:block;font-weight:700;line-height:1.3}
+.plist small{color:var(--muted);font-weight:700}
+.qty{display:flex;align-items:center;gap:2px;border:1.5px solid var(--line);border-radius:12px;background:#fff}
+.qty button{width:40px;height:40px;border:0;background:none;font-size:1.3rem;font-weight:700;color:var(--plum);cursor:pointer;border-radius:10px}
+.qty button:disabled{color:#CDBFC4;cursor:default}
+.qty span{min-width:22px;text-align:center;font-weight:800}
+li:not(.on) .qty{border-color:transparent;background:none}
+li:not(.on) .qty .m,li:not(.on) .qty span{display:none}
+li:not(.on) .qty .p{background:var(--plum);color:#fff;width:auto;padding:0 16px;font-size:.95rem}
+li:not(.on) .qty .p::after{content:" Add"}
+.ptot{display:flex;justify-content:space-between;border-top:1px dashed var(--line);margin-top:12px;padding-top:12px;font-weight:800;font-size:1.15rem}
+.pempty{color:var(--muted);margin:0}
+.f{display:grid;gap:6px;margin-bottom:14px}
+.f label{font-weight:700;font-size:.92rem}
+.f small{color:var(--muted);font-weight:500}
+input,textarea{width:100%;font:inherit;color:inherit;border:1.5px solid var(--line);background:#FFFCFB;border-radius:14px;padding:13px 14px;min-width:0}
+input:focus,textarea:focus{outline:none;border-color:var(--plum);background:#fff;box-shadow:0 0 0 4px rgba(91,42,74,.1)}
+input[aria-invalid="true"]{border-color:var(--bad)}
+.ph{display:flex;align-items:stretch}
+.ph span{display:grid;place-items:center;padding:0 12px;border:1.5px solid var(--line);border-right:0;border-radius:14px 0 0 14px;background:#F7EDEE;font-weight:700;color:var(--muted)}
+.ph input{border-radius:0 14px 14px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .f{margin-bottom:0}
+.hint{font-size:.85rem;color:var(--muted);margin:6px 0 14px;min-height:1px}
+.hint.ok{color:var(--ok);font-weight:700}.hint.bad{color:var(--bad);font-weight:700}
+.locbtn{display:flex;align-items:center;gap:10px;width:100%;border:1.5px dashed var(--plum);background:#fff;color:var(--plum);border-radius:14px;padding:12px 14px;font:inherit;font-weight:700;cursor:pointer;margin-bottom:14px}
+.locbtn.done{border-style:solid;border-color:var(--ok);color:var(--ok)}
+.prepaid-note{display:flex;gap:12px;align-items:center;border:1.5px solid var(--plum);border-radius:14px;padding:12px 14px;margin-bottom:14px;background:#fff}
+.prepaid-note b{display:block;font-size:1.05rem}.prepaid-note small{color:var(--muted)}
+.tk.on{background:var(--plum)}.tk.on::after{content:"";width:8px;height:14px;border:solid #fff;border-width:0 3.5px 3.5px 0;transform:translateY(-2px) rotate(45deg)}
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.pay label{border:1.5px solid var(--line);border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center;cursor:pointer;background:#fff;font-weight:700}
+.pay input{position:absolute;opacity:0;width:1px;height:1px}
+.pay span{font-size:1.15rem;font-weight:800}
+.tk{width:28px;height:28px;flex:none;border:2.5px solid var(--plum);border-radius:8px;display:grid;place-items:center;background:#fff}
+.pay label:has(input:checked) .tk{background:var(--plum)}
+.pay label:has(input:checked) .tk::after{content:"";width:8px;height:14px;border:solid #fff;border-width:0 3.5px 3.5px 0;transform:translateY(-2px) rotate(45deg)}
+.pay label:has(input:focus-visible){outline:3px solid var(--plum);outline-offset:2px}
+.pay label:has(input:checked){border-color:var(--plum);box-shadow:0 0 0 3px rgba(91,42,74,.12)}
+.pay small{display:block;font-weight:500;color:var(--muted);font-size:.78rem}
+.go{width:100%;border:0;border-radius:16px;background:var(--plum);color:#fff;font:inherit;font-weight:800;font-size:1.05rem;padding:16px;cursor:pointer;margin-top:4px}
+.go:disabled{opacity:.6;cursor:wait}
+.err{color:var(--bad);font-weight:700;margin:10px 0 0}
+.trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.done-box{text-align:center;padding:28px 18px}
+.tick{width:72px;height:72px;border-radius:50%;background:#E3F5EA;color:var(--ok);display:grid;place-items:center;margin:0 auto 14px}
+.wa{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;border-radius:16px;background:var(--wa);color:#fff;font-weight:800;padding:15px;text-decoration:none;margin-top:16px}
+.foot{text-align:center;color:var(--muted);font-size:.8rem;margin-top:18px}
+:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
+[hidden]{display:none!important}
+@media (max-width:380px){.two,.pay{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><div class="logo" id="logo">Order form</div><div class="safe"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Z"/></svg>Secure &amp; private</div></header>
+
+  <main id="formview">
+    <h1>Your order</h1>
+    <p class="lead">Choose your products and tell us where to deliver. It takes about a minute.</p>
+
+    <section class="card pick" id="pick" hidden aria-labelledby="h-pick">
+      <h2 class="sec" id="h-pick"><span>1</span> Choose your products</h2>
+      <div class="bchips" id="bchips" hidden role="group" aria-label="Brand"></div>
+      <ul class="plist" id="plist"></ul>
+      <div class="ptot" id="ptot" hidden></div>
+    </section>
+
+    <form id="f" class="card" novalidate>
+      <h2 class="sec" id="h-addr" hidden><span>2</span> Delivery details</h2>
+      <div class="f" id="wishbox" hidden><label for="wish">What would you like to order?</label><textarea id="wish" rows="2" placeholder="e.g. 1 Avocado Night Cream"></textarea></div>
+      <div class="f"><label for="name">Full name</label><input id="name" autocomplete="name" required></div>
+      <div class="f"><label for="phone">Mobile number <small>(for delivery updates)</small></label><div class="ph"><span>+91</span><input id="phone" inputmode="numeric" autocomplete="tel-national" maxlength="10" required></div></div>
+      <div class="f"><label for="alt">Alternate number <small>(optional)</small></label><div class="ph"><span>+91</span><input id="alt" inputmode="numeric" maxlength="10"></div></div>
+      <div class="f"><label for="house">House / flat no., building</label><input id="house" autocomplete="address-line1" required placeholder="e.g. Flat 4B, Lotus Apartments"></div>
+      <div class="f"><label for="area">Street, area, locality</label><input id="area" autocomplete="address-line2" required placeholder="e.g. 2nd Cross, Andheri West"></div>
+      <div class="f"><label for="landmark">Landmark <small>(helps the courier find you)</small></label><input id="landmark" placeholder="e.g. Near City Hospital"></div>
+      <div class="two">
+        <div class="f"><label for="pin">Pincode</label><input id="pin" inputmode="numeric" autocomplete="postal-code" maxlength="6" required></div>
+        <div class="f"><label for="city">City</label><input id="city" autocomplete="address-level2"></div>
+      </div>
+      <p class="hint" id="pinnote"></p>
+      <div class="f"><label for="state">State</label><input id="state" autocomplete="address-level1"></div>
+      <button type="button" class="locbtn" id="loc"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg><span>Add my current location <small style="font-weight:500">(optional)</small></span></button>
+      <div id="paybox" class="prepaid-note"><i class="tk on" aria-hidden="true"></i><div><b>Prepaid order</b><small>Payment by Google Pay / UPI</small></div></div>
+      <div class="f"><label for="note">Delivery note <small>(optional)</small></label><input id="note" placeholder="e.g. Call before delivery"></div>
+      <div class="trap" aria-hidden="true"><label>Website<input id="website" tabindex="-1" autocomplete="off"></label></div>
+      <button class="go" id="go" type="submit">Confirm my address</button>
+      <p class="err" id="err" role="alert" hidden></p>
+    </form>
+    <p class="foot">We use these details only to deliver your order.</p>
+  </main>
+
+  <main id="doneview" hidden>
+    <section class="card done-box">
+      <div class="tick"><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></div>
+      <h1 id="thanks">Thank you!</h1>
+      <p class="lead" style="margin:0">Your delivery details have reached us. We'll confirm your order on WhatsApp shortly.</p>
+      <a class="wa" id="walink" href="#" target="_blank" rel="noopener" hidden><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm4.5 12.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .2-1.2c-.1-.1-.3-.2-.5-.3Z"/></svg>Let us know on WhatsApp</a>
+    </section>
+    <p class="foot">Thank you for shopping with us 💛</p>
+  </main>
+</div>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var rs=function(n){return "₹"+Math.round(n||0).toLocaleString("en-IN")};
+function decode(s){try{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return JSON.parse(decodeURIComponent(escape(atob(s))))}catch(e){return null}}
+var ref=decode(new URLSearchParams(location.search).get("o")||"");
+function storeNo(){var b=typeof cur==="function"?cur():null;var w=(b&&b.w)||(ref&&ref.w)||"";return /^\d{10}$/.test(w)?w:"9980881230"}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+
+/* ---------- product picker ---------- */
+var bq=new URLSearchParams(location.search).get("b")||"";
+var brands=[],brandId=(ref&&ref.b)||bq||"",qty={},catalogOk=false;
+if(ref&&ref.i&&ref.i.length){ // products chosen by the shop: show them right away
+  brands=[{id:ref.b||"x",name:ref.bn||"",w:ref.w||"",products:ref.i.map(function(x){return {id:x[0],name:x[1],price:Number(x[3])||0}})}];
+  brandId=brands[0].id;ref.i.forEach(function(x){qty[x[0]]=Number(x[2])||1});
+}
+function cur(){for(var k=0;k<brands.length;k++)if(brands[k].id===brandId)return brands[k];return null}
+function total(){var b=cur();if(!b)return 0;return b.products.reduce(function(a,p){return a+(qty[p.id]||0)*p.price},0)}
+function setLogo(){var b=cur();var n=(b&&b.name)||(ref&&ref.bn)||"Order form";$("logo").textContent=n;document.title=n==="Order form"?n:n+" · Order form"}
+function renderPick(){setLogo();
+  var pick=$("pick");if(!brands.length){pick.hidden=true;$("h-addr").hidden=true;$("wishbox").hidden=false;return}
+  pick.hidden=false;$("h-addr").hidden=false;$("wishbox").hidden=true;
+  var chips=$("bchips");chips.hidden=brands.length<2;
+  chips.innerHTML=brands.map(function(b){return '<button type="button" data-b="'+esc(b.id)+'" aria-pressed="'+(b.id===brandId)+'">'+esc(b.name)+'</button>'}).join("");
+  var b=cur();
+  if(!b){$("plist").innerHTML='<li style="border-style:dashed;display:block"><p class="pempty">Choose a brand above to see its products.</p></li>';$("ptot").hidden=true;return}
+  $("plist").innerHTML=b.products.map(function(p){var q=qty[p.id]||0;return '<li class="'+(q?"on":"")+'"><div><b>'+esc(p.name)+'</b></div><div class="qty"><button type="button" class="m" data-q="'+esc(p.id)+'" data-d="-1" aria-label="One less '+esc(p.name)+'">−</button><span aria-live="polite">'+q+'</span><button type="button" class="p" data-q="'+esc(p.id)+'" data-d="1" aria-label="Add '+esc(p.name)+'">+</button></div></li>'}).join("");
+  var n=b.products.reduce(function(a,p){return a+(qty[p.id]||0)},0);$("ptot").hidden=!n;$("ptot").innerHTML='<span>Items selected</span><span>'+n+'</span>';
+}
+$("bchips").addEventListener("click",function(e){var x=e.target.closest("[data-b]");if(!x||x.dataset.b===brandId)return;brandId=x.dataset.b;qty={};renderPick()});
+$("plist").addEventListener("click",function(e){var x=e.target.closest("[data-q]");if(!x)return;var id=x.dataset.q;qty[id]=Math.max(0,Math.min(20,(qty[id]||0)+Number(x.dataset.d)));renderPick()});
+renderPick();
+fetch("/api/catalog"+(brandId&&!(ref&&ref.i&&ref.i.length&&!ref.b)?"?b="+encodeURIComponent(brandId):"")).then(function(r){return r.json()}).then(function(j){
+  if(!j.ok||!j.brands||!j.brands.length)return;catalogOk=true;
+  var keep=qty;brands=j.brands;
+  if(!brandId||brands.length===1)brandId=brands[0].id; // first brand (Glutanex) open by default
+  if(!cur())brandId="";qty=keep;renderPick();
+}).catch(function(){renderPick()});
+
+if(ref&&ref.ph&&/^\d{10}$/.test(ref.ph))$("phone").value=ref.ph;
+if(ref&&ref.n)$("name").value=ref.n;
+
+["phone","alt","pin"].forEach(function(id){$(id).addEventListener("input",function(e){e.target.value=e.target.value.replace(/\D/g,"")})});
+document.querySelectorAll("input").forEach(function(i){i.addEventListener("input",function(){i.removeAttribute("aria-invalid")})});
+var lastPin="";
+$("pin").addEventListener("input",function(){
+  var p=$("pin").value,n=$("pinnote");if(p.length!==6){n.textContent="";n.className="hint";return}
+  if(p===lastPin)return;lastPin=p;n.textContent="Checking pincode…";n.className="hint";
+  fetch("https://api.postalpincode.in/pincode/"+p).then(function(r){return r.json()}).then(function(j){
+    var po=j&&j[0]&&j[0].Status==="Success"&&j[0].PostOffice&&j[0].PostOffice[0];
+    if(po){if(!$("city").value)$("city").value=po.District;if(!$("state").value)$("state").value=po.State;n.textContent="✓ "+po.District+", "+po.State;n.className="hint ok"}
+    else{n.textContent="This pincode doesn't look right. Please check it.";n.className="hint bad"}
+  }).catch(function(){n.textContent="";});
+});
+var loc="";
+$("loc").addEventListener("click",function(){
+  var b=$("loc");if(!navigator.geolocation){b.querySelector("span").textContent="Location isn't available on this phone";return}
+  b.querySelector("span").textContent="Getting your location…";
+  navigator.geolocation.getCurrentPosition(function(p){loc=p.coords.latitude.toFixed(6)+","+p.coords.longitude.toFixed(6);b.classList.add("done");b.querySelector("span").textContent="Location added ✓"},
+    function(){b.querySelector("span").textContent="Couldn't get location. That's okay, the address is enough."},{enableHighAccuracy:true,timeout:12000});
+});
+$("f").addEventListener("submit",function(e){
+  e.preventDefault();var err=$("err");err.hidden=true;
+  var payEl=document.querySelector("[name=pay]:checked");
+  var d={name:$("name").value.trim(),phone:$("phone").value,alt:$("alt").value,house:$("house").value.trim(),area:$("area").value.trim(),landmark:$("landmark").value.trim(),
+    pin:$("pin").value,city:$("city").value.trim(),state:$("state").value.trim(),note:$("note").value.trim(),wish:$("wish").value.trim(),loc:loc,website:$("website").value,
+    pay:"upi",ref:null};
+  var cb=cur(),items=cb?cb.products.filter(function(p){return qty[p.id]>0}).map(function(p){return [p.id,p.name,qty[p.id],p.price]}):[];
+  if(items.length)d.ref={b:cb.id,bn:cb.name,p:(ref&&ref.p)||"",t:total(),i:items};
+  var bad=[];[["name",d.name.length>=2],["phone",/^[6-9]\d{9}$/.test(d.phone)],["house",d.house.length>=2],["area",d.area.length>=2],["pin",/^[1-9]\d{5}$/.test(d.pin)]].forEach(function(x){$(x[0]).setAttribute("aria-invalid",x[1]?"false":"true");if(!x[1])bad.push(x[0])});
+  if(!$("pick").hidden&&!items.length){err.textContent="Please choose at least one product above.";err.hidden=false;$("pick").scrollIntoView({behavior:"smooth"});return}
+  if(bad.length){err.textContent="Please fill: "+bad.map(function(b){return {name:"your name",phone:"a 10-digit mobile number",house:"house / flat",area:"street / area",pin:"a 6-digit pincode"}[b]}).join(", ")+".";err.hidden=false;var first=$(bad[0]);if(first)first.focus();return}
+  var go=$("go");go.disabled=true;go.textContent="Sending…";
+  fetch("/api/form",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}).then(function(r){return r.json()}).then(function(j){
+    if(!j.ok)throw new Error(j.error||"");
+    $("formview").hidden=true;$("doneview").hidden=false;window.scrollTo(0,0);
+    $("thanks").textContent="Thank you, "+d.name.split(" ")[0]+"!";
+    var items=d.ref?d.ref.i.map(function(x){return x[2]+" x "+x[1]}).join(", "):d.wish;
+    var msg="Hi! I've filled my delivery details.\n\nName: "+d.name+"\nMobile: "+d.phone+(items?"\nOrder: "+items:"")+"\nAddress: "+d.house+", "+d.area+(d.landmark?", "+d.landmark:"")+", "+d.city+" "+d.pin+"\nPayment: Prepaid";
+    var a=$("walink");a.href="https://wa.me/91"+storeNo()+"?text="+encodeURIComponent(msg);a.hidden=false;
+  }).catch(function(x){err.textContent=(x&&x.message)||"Couldn't send. Please check your internet and try again.";err.hidden=false;go.disabled=false;go.textContent="Confirm my address"});
+});
+})();
+</script>
+</body>
+</html>

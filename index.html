@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#121214">
+<title>Order Desk</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23121214'/%3E%3Cpath d='M16 22 32 14l16 8v20l-16 8-16-8z' fill='none' stroke='%23FFD43B' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M16 22l16 8 16-8M32 30v20' fill='none' stroke='%23FFD43B' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="app.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<div id="lock" class="lock" hidden>
+  <form id="lockform" class="lockbox">
+    <div class="logo">ORDER<b>DESK</b></div>
+    <label for="lockpin">Enter PIN</label>
+    <input id="lockpin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="8">
+    <button class="btn primary" type="submit">Unlock</button>
+    <p class="err" id="lockerr" hidden>Wrong PIN. Try again.</p>
+  </form>
+</div>
+
+<div id="app" class="app">
+  <header class="bar">
+    <a class="logo" href="#dashboard">ORDER<b>DESK</b></a>
+    <label class="brandpick"><span class="dot" id="branddot"></span><select id="brandsel" aria-label="Brand"></select></label>
+    <nav class="nav" id="nav" aria-label="Sections">
+      <a href="#dashboard" data-r="dashboard">Today</a>
+      <a href="#new" data-r="new">New order</a>
+      <a href="#orders" data-r="orders">Orders</a>
+      <a href="#dispatch" data-r="dispatch">Dispatch</a>
+      <a href="#scan" data-r="scan">Scan</a>
+      <a href="#customers" data-r="customers">Customers</a>
+      <a href="#reports" data-r="reports">Reports</a>
+      <a href="#settings" data-r="settings">Settings</a>
+    </nav>
+    <button class="sync" id="syncbtn" type="button" title="Sync online"><span class="sd" id="syncdot"></span><span id="synctxt">Local</span></button>
+  </header>
+  <main id="view" class="view" tabindex="-1"></main>
+</div>
+
+<div id="print" class="print" aria-hidden="true"></div>
+<div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

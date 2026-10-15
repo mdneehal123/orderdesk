@@ -657,11 +657,14 @@ function vDashboard() {
   const unpaid = L.filter(o => o.pay === "upi" && !o.paid && o.status !== "cancelled");
   const wk = localISO(new Date(Date.now() - 6 * 864e5)); const onRoad = L.filter(o => ONROAD.includes(o.status) && o.shippedAt && o.shippedAt.slice(0, 10) >= wk);
   const unprinted = toShip.filter(o => !o.printedAt);
+  const printedWaiting = toShip.filter(o => o.printedAt).sort((x, y) => (y.createdAt || "").localeCompare(x.createdAt || ""));
   const brandName = device.brand === "all" ? "All brands" : brandById(device.brand).name;
   const refills = refillDue();
   $("#view").innerHTML = `
   <div class="head"><div><h1>Today · ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</h1><p class="sub">${esc(brandName)}</p></div>
     <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${unprinted.length ? `<button class="btn" id="dlall" type="button" title="One PDF with only the ${unprinted.length} new label(s) not yet printed or downloaded">⬇ PDF · ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share one PDF with the new labels">↗ Share PDF</button>` : ""}</div></div>
+  ${printedWaiting.length ? `<section class="card reprint" aria-labelledby="h-reprint"><div class="reprint-head"><div><h2 id="h-reprint">Label already printed · not dispatched yet (${printedWaiting.length})</h2><p class="hint">These are not in the PDF above. Tap ＋ to put one back, or add them all.</p></div>${printedWaiting.length > 1 ? `<button class="btn sm" type="button" id="reprintall">Add all ${printedWaiting.length} back</button>` : ""}</div>
+    <ul class="reprint-list">${printedWaiting.map(o => `<li><b>${esc(o.name)}</b><span>${esc(itemsText(o))}</span><button class="btn sm hi" type="button" data-reprint="${esc(o.id)}" aria-label="Add ${esc(o.name)} back to the PDF">＋ Add back</button></li>`).join("")}</ul></section>` : ""}
   ${lateBox(toShip.filter(o => daysLate(o) > 0).sort((x, y) => daysLate(y) - daysLate(x)))}
   <div class="grid g4">
     <div class="kpi"><span>Orders today</span><b>${tod.length}</b><small>${tod.reduce((a, o) => a + pcs(o), 0)} pcs</small></div>
@@ -690,6 +693,8 @@ function vDashboard() {
   ${device.sheetUrl ? "" : `<div class="card" style="margin-top:14px;border-color:var(--hi);border-width:2px"><h2>Turn on online storage</h2><p class="hint" style="margin:6px 0 10px">Right now orders are saved only in this browser. Connect online storage so they're safe and shared between your phone and laptop.</p><a class="btn" href="#settings">Connect now</a></div>`}`;
   const pa = $("#printall"); if (pa) pa.onclick = () => printDocs(unprinted, "label", true);
   const dla = $("#dlall"); if (dla) dla.onclick = () => downloadLabels(unprinted);
+  const rpa = $("#reprintall"); if (rpa) rpa.onclick = () => { printedWaiting.forEach(o => patch(o.id, { printedAt: "" })); toast(`${printedWaiting.length} labels added back to the PDF`); vDashboard(); };
+  document.querySelectorAll("[data-reprint]").forEach(b => b.onclick = () => { const o = orders[b.dataset.reprint]; if (!o) return; patch(o.id, { printedAt: "" }); toast(o.name.split(" ")[0] + " added back to the PDF"); vDashboard(); });
   const sha2 = $("#shareall"); if (sha2) sha2.onclick = () => shareLabels(unprinted);
   $("#formcopy").onclick = () => copyText(ORDER_LINK(), "Order form link copied ✓");
 }

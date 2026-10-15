@@ -888,15 +888,21 @@ function vDispatch() {
   // Every order with tracking added goes here automatically (dispatched in the last 7 days, newest first),
   // whether the AWB was added on this page or on the order itself.
   const wk = localISO(new Date(Date.now() - 6 * 864e5));
-  const done = live().filter(inBrand).filter(o => ONROAD.includes(o.status) && o.awb && (o.shippedAt || o.updatedAt || "").slice(0, 10) >= wk)
+  const allDone = live().filter(inBrand).filter(o => ONROAD.includes(o.status) && o.awb)
     .sort((a, b) => (b.shippedAt || "").localeCompare(a.shippedAt || ""));
+  const dq = (ui.dq || "").trim().toLowerCase();
+  const done = allDone.filter(o => dq ? [o.id, o.name, o.phone, o.awb, o.pin].some(v => String(v || "").toLowerCase().includes(dq))
+    : ui.dispAll || (o.shippedAt || o.updatedAt || "").slice(0, 10) >= wk);
+  const older = allDone.length - allDone.filter(o => (o.shippedAt || o.updatedAt || "").slice(0, 10) >= wk).length;
   $("#view").innerHTML = `<div class="head"><div><h1>Dispatch</h1><p class="sub">Add courier and AWB for each parcel you hand over. Press Enter to jump to the next row (works with a barcode scanner).</p></div>
     <div class="f"><label>Courier for all rows</label><select id="allcour"><option value="">Choose…</option>${COURIERS.map(c => `<option>${esc(c)}</option>`).join("")}</select></div></div>
   ${list.length ? `<div class="tbl"><table class="dt"><thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Payment</th><th>Courier</th><th>AWB / consignment no.</th></tr></thead><tbody>${list.map(o => { const b = brandById(o.brand); return `<tr data-id="${esc(o.id)}"><td><span class="tag t-brand" style="--bc:${b.color}">${esc(b.prefix)}</span> <span class="mono">${esc(o.id)}</span></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td class="mono">${esc(o.pin)}<div class="hint">${esc(o.city)}</div></td><td>${payTag(o)}</td>
     <td><select data-c><option value="">—</option>${COURIERS.map(c => `<option${o.courier === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></td><td><input class="mono" data-w autocomplete="off" placeholder="Scan or type" value="${esc(o.awb || "")}"></td></tr>`; }).join("")}</tbody></table></div>
     <div class="actions" style="margin-top:12px"><button class="btn hi" id="dsaveall">Save &amp; mark dispatched</button><span class="hint">Only rows with an AWB number are saved.</span></div>`
   : `<div class="empty"><h2>Nothing waiting to dispatch</h2><p>Orders that are new, paid or packed appear here.</p></div>`}
-  ${done.length ? `<div class="card stack" style="margin-top:16px"><h2>Dispatched · last 7 days <span class="tag t-transit">${done.length}</span></h2><p class="hint" style="margin:0">Orders move here automatically as soon as tracking is added.</p><div class="tbl"><table><tbody>${done.map(o => `<tr><td class="mono">${esc(o.id)}<div class="hint">${o.shippedAt ? dmy(o.shippedAt.slice(0, 10)) : ""}</div></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td>${esc(o.courier || "")} <span class="mono">${esc(o.awb)}</span></td><td>${SEND_BTN(o, "sm hi")}${o.trackingSentAt ? ` <span class="hint">✓ sent</span>` : ""}</td></tr>`).join("")}</tbody></table></div><div class="actions">${done.some(o => !o.trackingSentAt) ? waAnchor(done.find(o => !o.trackingSentAt), "btn primary", `${WA_ICON} Send to next: ${esc(done.find(o => !o.trackingSentAt).name)} (${done.filter(o => !o.trackingSentAt).length} left)`, "track") : `<span class="hint">✓ Tracking sent to everyone in this list.</span>`}<a class="btn sm" href="#orders">See all orders</a></div></div>` : ""}`;
+  ${allDone.length ? `<div class="card stack" style="margin-top:16px"><div class="head" style="margin:0"><div><h2>Dispatched · ${dq ? "search" : ui.dispAll ? "all" : "last 7 days"} <span class="tag t-transit">${done.length}</span></h2><p class="hint" style="margin:0">Orders move here automatically as soon as tracking is added, and stay here.</p></div>
+    <input type="search" id="dq" placeholder="Search name, phone or AWB" value="${esc(ui.dq || "")}" aria-label="Search dispatched" style="max-width:260px"></div>
+    ${!done.length ? `<p class="hint">Nothing matches.</p>` : ""}<div class="tbl"><table><tbody>${done.map(o => `<tr><td class="mono">${esc(o.id)}<div class="hint">${o.shippedAt ? dmy(o.shippedAt.slice(0, 10)) : ""}</div></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td>${esc(o.courier || "")} <span class="mono">${esc(o.awb)}</span></td><td>${SEND_BTN(o, "sm hi")}${o.trackingSentAt ? ` <span class="hint">✓ sent</span>` : ""}</td></tr>`).join("")}</tbody></table></div><div class="actions">${done.some(o => !o.trackingSentAt) ? waAnchor(done.find(o => !o.trackingSentAt), "btn primary", `${WA_ICON} Send to next: ${esc(done.find(o => !o.trackingSentAt).name)} (${done.filter(o => !o.trackingSentAt).length} left)`, "track") : `<span class="hint">✓ Tracking sent to everyone in this list.</span>`}${!dq && older ? `<button class="btn sm" id="dall" type="button">${ui.dispAll ? "Show last 7 days only" : `Show all dispatched (${older} older)`}</button>` : ""}<a class="btn sm" href="#orders">See all orders</a></div></div>` : ""}`;
   const rows = [...document.querySelectorAll(".dt tbody tr")];
   rows.forEach((tr, i) => { const w = tr.querySelector("[data-w]"); w.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); const n = rows[i + 1]; if (n) n.querySelector("[data-w]").focus(); else $("#dsaveall").focus(); } }; });
   if ($("#allcour")) $("#allcour").onchange = e => rows.forEach(tr => { const s = tr.querySelector("[data-c]"); if (!s.value) s.value = e.target.value; });
@@ -906,7 +912,9 @@ function vDispatch() {
       patch(id, { awb, courier: tr.querySelector("[data-c]").value, status: "shipped", shippedAt: today() + "T" + new Date().toTimeString().slice(0, 8) }); saved.push(id); });
     if (!saved.length) { toast("Type or scan at least one AWB number."); return; }
     ui.dispatched = [...new Set([...(ui.dispatched || []), ...saved])]; toast(`Dispatched ${saved.length} order${saved.length > 1 ? "s" : ""}`); vDispatch(); };
-  const first = document.querySelector(".dt [data-w]"); if (first) first.focus();
+  if ($("#dall")) $("#dall").onclick = () => { ui.dispAll = !ui.dispAll; vDispatch(); };
+  if ($("#dq")) $("#dq").oninput = e => { ui.dq = e.target.value; const pos = e.target.selectionStart; vDispatch(); const n = $("#dq"); n.focus(); n.setSelectionRange(pos, pos); };
+  const first = document.querySelector(".dt [data-w]"); if (first && !ui.dq) first.focus();
 }
 
 /* ---- scan ---- */

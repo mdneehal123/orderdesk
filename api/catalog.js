@@ -1,8 +1,12 @@
 // Order Desk — PUBLIC product list for the customer address form.
 // Shares only brand names, product names and prices from your Settings. Nothing else.
 
-const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+// Finds the database keys Vercel adds when you connect Upstash Redis, even if they were given a prefix
+// (for example STORAGE_KV_REST_API_URL). Read-only tokens are skipped.
+const envFind = (ends) => { const e = process.env; for (const k of ends) if (e[k]) return e[k];
+  const hit = Object.keys(e).find(k => ends.some(s => k.endsWith("_" + s)) && !/READ_ONLY/.test(k)); return hit ? e[hit] : ""; };
+const URL_ = envFind(["KV_REST_API_URL", "UPSTASH_REDIS_REST_URL"]);
+const TOKEN = envFind(["KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_TOKEN"]);
 
 // Built-in list, used until your Settings are saved online (same as the desk's defaults).
 const PH = "9980881230";

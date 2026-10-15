@@ -548,7 +548,8 @@ function inboxToPrefill(f) {
 async function autoImport() {
   let made = 0; const names = [];
   for (const f of [...inbox]) {
-    const p = inboxToPrefill(f); if (!p.items.length) continue; // needs products
+    const p = inboxToPrefill(f); // every form order goes straight in, so its label is ready; if no product came through, it's flagged in the notes
+    if (!p.items.length) p.notes = ["⚠ Product not chosen on the form — please check with the customer", p.notes].filter(Boolean).join(" · ");
     const b = brandById(p.brand); const at = f.receivedAt || new Date().toISOString();
     const id = (b.prefix || "OD").toUpperCase() + localISO(new Date(at)).replace(/-/g, "").slice(2) + "F" + f.id.slice(-4);
     if (!orders[id]) {

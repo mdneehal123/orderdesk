@@ -603,6 +603,13 @@ $("#brandsel").addEventListener("change", e => { device.brand = e.target.value; 
 $("#syncbtn").addEventListener("click", () => syncNow(false));
 
 /* ------------------------------------------------------------------ views */
+/* Orders added before today that still have no tracking = late. Shown in red on the home and Dispatch pages. */
+function daysLate(o) { const d = o.date || (o.createdAt || "").slice(0, 10); if (!d || !TOSHIP.includes(o.status)) return 0; return Math.max(0, Math.round((new Date(today()) - new Date(d)) / 864e5)); }
+function lateBox(list) {
+  if (!list.length) return "";
+  return `<section class="card late" role="alert" aria-labelledby="h-late"><div class="late-head"><div><h2 id="h-late">⚠ Dispatch now · ${list.length} order${list.length > 1 ? "s" : ""} not dispatched</h2><p>Added on an earlier day and still waiting for tracking. Please ship ${list.length > 1 ? "these" : "this"} as soon as possible.</p></div><a class="btn" href="#dispatch">Go to Dispatch</a></div>
+  <ul class="late-list">${list.map(o => `<li><b>${esc(o.name)}</b><span>${esc(itemsText(o))}</span><span class="mono">${esc(o.id)}</span><span class="late-tag">${daysLate(o)} day${daysLate(o) > 1 ? "s" : ""} late</span><a class="btn sm" href="#orders?${encodeURIComponent(o.id)}">Add tracking</a></li>`).join("")}</ul></section>`;
+}
 function vDashboard() {
   const L = live().filter(inBrand); const t = today();
   const tod = L.filter(o => o.date === t && o.status !== "cancelled");
@@ -615,6 +622,7 @@ function vDashboard() {
   $("#view").innerHTML = `
   <div class="head"><div><h1>Today · ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</h1><p class="sub">${esc(brandName)}</p></div>
     <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${unprinted.length ? `<button class="btn" id="dlall" type="button" title="One PDF with only the ${unprinted.length} new label(s) not yet printed or downloaded">⬇ PDF · ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share one PDF with the new labels">↗ Share PDF</button>` : ""}</div></div>
+  ${lateBox(toShip.filter(o => daysLate(o) > 0).sort((x, y) => daysLate(y) - daysLate(x)))}
   <div class="grid g4">
     <div class="kpi"><span>Orders today</span><b>${tod.length}</b><small>${tod.reduce((a, o) => a + pcs(o), 0)} pcs</small></div>
     <div class="kpi ${toShip.length ? "hot" : ""}"><span>To pack &amp; ship</span><b>${toShip.length}</b><small>${unprinted.length} new label${unprinted.length === 1 ? "" : "s"} to print</small></div>
@@ -931,7 +939,7 @@ function exportCSV() {
 
 /* ---- dispatch: add tracking for many parcels at once ---- */
 function vDispatch() {
-  const list = live().filter(inBrand).filter(o => TOSHIP.includes(o.status)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const list = live().filter(inBrand).filter(o => TOSHIP.includes(o.status)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // oldest (most late) first
   // Every order with tracking added goes here automatically (dispatched in the last 7 days, newest first),
   // whether the AWB was added on this page or on the order itself.
   const wk = localISO(new Date(Date.now() - 6 * 864e5));
@@ -943,7 +951,7 @@ function vDispatch() {
   const older = allDone.length - allDone.filter(o => (o.shippedAt || o.updatedAt || "").slice(0, 10) >= wk).length;
   $("#view").innerHTML = `<div class="head"><div><h1>Dispatch</h1><p class="sub">Add courier and AWB for each parcel you hand over. Press Enter to jump to the next row (works with a barcode scanner).</p></div>
     <div class="f"><label>Courier for all rows</label><select id="allcour"><option value="">Choose…</option>${COURIERS.map(c => `<option>${esc(c)}</option>`).join("")}</select></div></div>
-  ${list.length ? `<div class="tbl"><table class="dt"><thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Payment</th><th>Courier</th><th>AWB / consignment no.</th></tr></thead><tbody>${list.map(o => { const b = brandById(o.brand); return `<tr data-id="${esc(o.id)}"><td><span class="tag t-brand" style="--bc:${b.color}">${esc(b.prefix)}</span> <span class="mono">${esc(o.id)}</span></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td class="mono">${esc(o.pin)}<div class="hint">${esc(o.city)}</div></td><td>${payTag(o)}</td>
+  ${list.length ? `<div class="tbl"><table class="dt"><thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Payment</th><th>Courier</th><th>AWB / consignment no.</th></tr></thead><tbody>${list.map(o => { const b = brandById(o.brand); return `<tr data-id="${esc(o.id)}"${daysLate(o) ? ' class="late-row"' : ""}><td><span class="tag t-brand" style="--bc:${b.color}">${esc(b.prefix)}</span> <span class="mono">${esc(o.id)}</span>${daysLate(o) ? `<div><span class="late-tag">${daysLate(o)} day${daysLate(o) > 1 ? "s" : ""} late</span></div>` : ""}</td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td class="mono">${esc(o.pin)}<div class="hint">${esc(o.city)}</div></td><td>${payTag(o)}</td>
     <td><select data-c><option value="">—</option>${COURIERS.map(c => `<option${o.courier === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></td><td><input class="mono" data-w autocomplete="off" placeholder="Scan or type" value="${esc(o.awb || "")}"></td></tr>`; }).join("")}</tbody></table></div>
     <div class="actions" style="margin-top:12px"><button class="btn hi" id="dsaveall">Save &amp; mark dispatched</button><span class="hint">Only rows with an AWB number are saved.</span></div>`
   : `<div class="empty"><h2>Nothing waiting to dispatch</h2><p>Orders that are new, paid or packed appear here.</p></div>`}

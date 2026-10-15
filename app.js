@@ -439,8 +439,7 @@ function refillMessage(o, days) {
   const first = (o.name || "").split(" ")[0]; const p = prodPhrase(o); const w = Math.max(1, Math.round(days / 7));
   return [`Hi ${first} 🌸`, "",
     `It's been about ${w} week${w > 1 ? "s" : ""} since your *${p}* reached you. By now your jar may be running low.`, "",
-    `Would you like us to send a fresh one? Just reply *YES* and we'll pack it today. ✨`, "",
-    `Same address as last time:`, `${o.address}, ${o.city} ${o.pin}`, "",
+    `Order a fresh one here in 1 minute: ✨`, ORDER_LINK() + "?b=" + encodeURIComponent(o.brand), "",
     `_"${quoteFor({ id: o.id + "r" })}"_`, "", signoff()].join("\n");
 }
 function refillCard(list) {

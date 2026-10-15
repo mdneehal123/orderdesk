@@ -358,18 +358,46 @@ async function shareLabel(o) {
 document.addEventListener("click", e => { const x = e.target.closest("[data-sharelbl]"); if (x) { const o = orders[x.dataset.sharelbl]; if (o) shareLabel(o); } });
 const LABEL_BTNS = o => `<button type="button" class="btn sm" data-png="${esc(o.id)}">⬇ Download</button><button type="button" class="btn sm" data-sharelbl="${esc(o.id)}">↗ Share</button>`;
 async function downloadLabelPNG(o) { const blob = await labelBlob(o); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${o.id}-label.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }
-/* Many labels at once: Share sends all pictures together (phone → WhatsApp etc.); Download saves each picture. */
-async function shareLabels(list) {
-  if (!list.length) return; toast("Preparing " + list.length + " label" + (list.length > 1 ? "s" : "") + "…");
-  const files = await Promise.all(list.map(async o => new File([await labelBlob(o)], `${o.id}-label.png`, { type: "image/png" })));
-  if (navigator.canShare && navigator.canShare({ files })) {
-    try { await navigator.share({ files, title: list.length + " labels" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+/* Many labels at once → ONE PDF, one 4 × 6 inch label per page (10 orders = 10 pages).
+   Built right here in the browser, no extra library needed. */
+async function labelsPDF(list) {
+  const enc = new TextEncoder(); const parts = []; let len = 0; const offs = [];
+  const add = d => { const b = typeof d === "string" ? enc.encode(d) : d; parts.push(b); len += b.length; };
+  const imgs = [];
+  for (const o of list) {
+    const c = await labelCanvas(o); const bin = atob(c.toDataURL("image/jpeg", 0.92).split(",")[1]);
+    imgs.push({ w: c.width, h: c.height, data: Uint8Array.from(bin, ch => ch.charCodeAt(0)) });
   }
-  await downloadLabels(list); toast("Sharing isn't available here, so the labels were downloaded instead.");
+  const n = imgs.length, W = 288, H = 432; // 4 × 6 inches in PDF points
+  // objects: 1 catalog, 2 pages, then for each label: page, content, image
+  const obj = (id, body) => { offs[id] = len; add(`${id} 0 obj\n`); body(); add("\nendobj\n"); };
+  add("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+  obj(1, () => add("<< /Type /Catalog /Pages 2 0 R >>"));
+  obj(2, () => add(`<< /Type /Pages /Count ${n} /Kids [${imgs.map((_, i) => `${3 + i * 3} 0 R`).join(" ")}] >>`));
+  imgs.forEach((im, i) => {
+    const pg = 3 + i * 3, ct = pg + 1, ig = pg + 2; const draw = `q ${W} 0 0 ${H} 0 0 cm /L Do Q`;
+    obj(pg, () => add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /L ${ig} 0 R >> >> /Contents ${ct} 0 R >>`));
+    obj(ct, () => add(`<< /Length ${draw.length} >>\nstream\n${draw}\nendstream`));
+    obj(ig, () => { add(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.data.length} >>\nstream\n`); add(im.data); add("\nendstream"); });
+  });
+  const total = 3 + n * 3; const xref = len;
+  add(`xref\n0 ${total}\n0000000000 65535 f \n` + Array.from({ length: total - 1 }, (_, i) => String(offs[i + 1]).padStart(10, "0") + " 00000 n \n").join(""));
+  add(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  return new Blob(parts, { type: "application/pdf" });
 }
+const pdfName = list => `labels-${today()}-${list.length}.pdf`;
 async function downloadLabels(list) {
-  for (const o of list) { await downloadLabelPNG(o); await new Promise(r => setTimeout(r, 350)); }
-  toast("Downloaded " + list.length + " label" + (list.length > 1 ? "s" : "") + (list.length > 1 ? " (allow multiple downloads if the browser asks)" : ""));
+  if (!list.length) return; toast("Making PDF of " + list.length + " label" + (list.length > 1 ? "s" : "") + "…");
+  const blob = await labelsPDF(list); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = pdfName(list); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast(`Downloaded 1 PDF · ${list.length} page${list.length > 1 ? "s" : ""}`);
+}
+async function shareLabels(list) {
+  if (!list.length) return; toast("Making PDF of " + list.length + " label" + (list.length > 1 ? "s" : "") + "…");
+  const file = new File([await labelsPDF(list)], pdfName(list), { type: "application/pdf" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: list.length + " labels" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  }
+  await downloadLabels(list); toast("Sharing isn't available here, so the PDF was downloaded instead.");
 }
 const SEND_BTN = (o, cls) => waAnchor(o, `btn ${cls || "hi"} sendbtn`, `${WA_ICON} Send on WhatsApp`, "track");
 const WA_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .2-1.2c-.1-.1-.3-.2-.5-.3Z"/></svg>';
@@ -584,7 +612,7 @@ function vDashboard() {
   const refills = refillDue();
   $("#view").innerHTML = `
   <div class="head"><div><h1>Today · ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</h1><p class="sub">${esc(brandName)}</p></div>
-    <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${toShip.length ? `<button class="btn" id="dlall" type="button" title="Download the label pictures of all ${toShip.length} orders to ship">⬇ Download ${toShip.length}</button><button class="btn" id="shareall" type="button" title="Share the label pictures of all ${toShip.length} orders to ship">↗ Share ${toShip.length}</button>` : ""}</div></div>
+    <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${toShip.length ? `<button class="btn" id="dlall" type="button" title="Download the label pictures of all ${toShip.length} orders to ship">⬇ PDF · ${toShip.length} label${toShip.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share the label pictures of all ${toShip.length} orders to ship">↗ Share PDF</button>` : ""}</div></div>
   <div class="grid g4">
     <div class="kpi"><span>Orders today</span><b>${tod.length}</b><small>${tod.reduce((a, o) => a + pcs(o), 0)} pcs</small></div>
     <div class="kpi ${toShip.length ? "hot" : ""}"><span>To pack &amp; ship</span><b>${toShip.length}</b><small>${unprinted.length} labels not printed</small></div>
@@ -804,7 +832,7 @@ function vOrders() {
     <div class="chips">${FILTERS.map(([k, n]) => `<button class="chip" data-f="${k}" aria-pressed="${ui.filter === k}">${n} · ${base.filter(o => passFilter(o, k)).length}</button>`).join("")}</div></div>
   <div class="list" id="list">${list.length ? list.map(orderCard).join("") : `<div class="empty"><h2>${base.length ? "Nothing matches" : "No orders yet"}</h2><p>${base.length ? "Try another filter or search." : "Add your first WhatsApp order."}</p>${base.length ? "" : `<a class="btn hi" href="#new">+ New order</a>`}</div>`}</div>
   <div class="selbar" id="selbar" ${ui.sel.size ? "" : "hidden"}><b id="selc">${ui.sel.size} selected</b><div class="actions">
-    <button class="btn sm hi" data-b="label">Print labels</button><button class="btn sm" data-b="dl">⬇ Download labels</button><button class="btn sm" data-b="share">↗ Share labels</button><button class="btn sm" data-b="slip">Packing slips</button><button class="btn sm" data-b="both">Label + slip</button>
+    <button class="btn sm hi" data-b="label">Print labels</button><button class="btn sm" data-b="dl">⬇ Labels PDF</button><button class="btn sm" data-b="share">↗ Share PDF</button><button class="btn sm" data-b="slip">Packing slips</button><button class="btn sm" data-b="both">Label + slip</button>
     <button class="btn sm" data-b="packed">Mark packed</button><a class="btn sm" href="#dispatch">Add tracking</a><button class="btn sm" data-b="none">Clear</button></div></div>`;
   $("#q").oninput = e => { ui.q = e.target.value; const pos = e.target.selectionStart; vOrders(); const n = $("#q"); n.focus(); n.setSelectionRange(pos, pos); };
   document.querySelectorAll("[data-f]").forEach(c => c.onclick = () => { ui.filter = c.dataset.f; ui.justShipped = null; vOrders(); });

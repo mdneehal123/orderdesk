@@ -351,7 +351,7 @@ function markSent(o) { if (orders[o.id] && !orders[o.id].trackingSentAt) patch(o
 async function shareLabel(o) {
   const blob = await labelBlob(o); const file = new File([blob], `${o.id}-label.png`, { type: "image/png" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: "Label " + o.id }); markLabelsDone([o]); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.share({ files: [file], title: "Label " + o.id }); return; } /* sharing one label (e.g. to the customer) does not take it out of the bulk labels */ catch (e) { if (e && e.name === "AbortError") return; }
   }
   downloadLabelPNG(o); toast("Sharing isn't available on this device, so the label was downloaded instead.");
 }
@@ -886,7 +886,7 @@ function orderCard(o) {
   <input type="checkbox" data-a="sel" aria-label="Select ${esc(o.id)}" ${ui.sel.has(o.id) ? "checked" : ""}>
   <div class="who"><b>${esc(o.name)}</b><span class="meta"><span class="mono">${esc(o.id)}</span> · ${dmy(o.date)} · ${esc(o.city)} ${esc(o.pin)} · ${esc(fmtPhone(o.phone))}</span><span class="meta">${esc(itemsText(o))}</span>${o.awb ? `<span class="meta">${esc(o.courier || "")} AWB <span class="mono">${esc(o.awb)}</span></span>` : ""}${o.notes ? `<span class="meta">Note: ${esc(o.notes)}</span>` : ""}</div>
   <div class="rt"><div><span class="tag t-brand" style="--bc:${b.color}">${esc(b.prefix)}</span> ${payTag(o)} <span class="tag t-${st[0]}">${st[1]}</span></div>
-    <div class="actions">${TOSHIP.includes(o.status) ? `<button class="btn sm primary" data-a="track">Add tracking</button>` : ""}<button class="btn sm hi" data-a="label">Print label</button>${LABEL_BTNS(o)}<button class="btn sm" data-a="slip">Slip</button></div>${o.printedAt ? `<span class="hint">Label printed ${dmy(localISO(new Date(o.printedAt)))}</span>` : ""}</div>
+    <div class="actions">${TOSHIP.includes(o.status) ? `<button class="btn sm primary" data-a="track">Add tracking</button>` : ""}<button class="btn sm hi" data-a="label">Print label</button>${LABEL_BTNS(o)}<button class="btn sm" data-a="slip">Slip</button></div>${o.printedAt ? `<span class="hint">Label printed ${dmy(localISO(new Date(o.printedAt)))}${TOSHIP.includes(o.status) ? ` <button type="button" class="btn sm ghost" data-a="unprint">Add back to bulk labels</button>` : ""}</span>` : ""}</div>
   <details${ui.open.has(o.id) ? " open" : ""}><summary>Update · WhatsApp · preview</summary><div class="more">
     ${trackBlock(o)}
     <div class="row"><div class="f"><label>Status</label><select data-a="status">${STATUS.map(([k, n]) => `<option value="${k}"${o.status === k ? " selected" : ""}>${n}</option>`).join("")}</select></div>
@@ -937,6 +937,7 @@ function listClick(e) {
   if (a === "dcancel") { ui.dispatch = null; vOrders(); return; }
   if (a === "dsave") { const wasNew = TOSHIP.includes(o.status); if (saveDispatch(id, x.closest("[data-dform]"))) { ui.dispatch = null; if (wasNew) { ui.dispHi = id; ui.dispAll = false; ui.dq = ""; toast(o.name.split(" ")[0] + " moved to Dispatch ✓"); location.hash = "#dispatch"; } else { toast("Tracking updated for " + id); vOrders(); } } return; } // newly dispatched orders leave Orders and go to Dispatch
   if (a === "step") { const s2 = x.dataset.s; if (o.status !== s2) { patch(id, { status: s2 }); toast(o.name.split(" ")[0] + ": " + stName(s2)); vOrders(); } return; }
+  if (a === "unprint") { patch(id, { printedAt: "" }); toast(o.name.split(" ")[0] + " is back in the bulk labels"); vOrders(); return; }
   if (a === "copyawb") { navigator.clipboard && navigator.clipboard.writeText(o.awb).then(() => toast("AWB copied"), () => toast(o.awb)); return; }
   if (a === "edit") { ui.editing = id; ui.formBrand = o.brand; location.hash = "#new"; }
   if (a === "dup") { ui.editing = null; ui.formBrand = o.brand; ui.prefill = { ...o, utr: "", paid: false, disc: 0, code: "", notes: "" }; location.hash = "#new"; }

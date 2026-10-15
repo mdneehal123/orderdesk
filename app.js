@@ -405,7 +405,7 @@ function trackingMessage(o) {
 }
 function templates(o) {
   const b = brandById(o.brand); const first = (o.name || "").split(" ")[0]; const items = itemsText(o); const p = prodPhrase(o);
-  const t = [["Confirm order", `Hi ${first}, thank you for ordering ${p}!\n\nOrder: ${o.id}\n${items}\nPrepaid ✓\n\nDelivery address:\n${o.address}, ${o.city} ${o.pin}\n\nPlease check the address and reply OK.`]];
+  const t = [["Confirm order", `Hi ${first}, thank you for ordering ${p}!\n\nOrder: ${o.id}\n${items}\nPrepaid ✓\n\nDelivery address:\n${o.address}, ${o.city} ${o.pin}\n\nWe'll pack it with love and send you the tracking details once it's dispatched. 💛`]];
   if (!o.paid) t.push(["Ask for payment", `Hi ${first}, your order for ${p} (${o.id}) is ready.\n\nPlease pay with Google Pay / any UPI app${b.upi ? " to " + b.upi : ""} and send the payment screenshot. We ship as soon as payment is received.`]);
   if (o.awb) t.push(["Tracking (text only)", trackingMessage(o)]);
   if (o.status === "ofd") t.push(["Out for delivery", `Hi ${first}, your ${p} ${pcs(o) > 1 ? "are" : "is"} out for delivery today${o.courier ? " with " + o.courier : ""}. Please keep your phone reachable.`]);

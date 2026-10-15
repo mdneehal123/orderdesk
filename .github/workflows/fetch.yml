@@ -1,4 +1,4 @@
-name: Find free skincare photos (Unsplash)
+name: Copy routine photos to look at
 on:
   push:
     branches: [mg-photos]
@@ -9,49 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Search Unsplash and save free candidates
-        run: |
-          python3 - <<'PY'
-          import json, urllib.request, urllib.parse, os
-          qs = ["indian woman skincare","indian woman face cream","indian woman washing face","indian woman applying cream","woman applying face cream brown skin",
-                "woman applying sunscreen face","woman night skincare routine","woman removing makeup cotton pad","woman sleeping peacefully","indian woman glowing skin portrait",
-                "south asian woman skincare","woman moisturizer face mirror"]
-          H = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
-          seen, keep = set(), []
-          os.makedirs("cand", exist_ok=True)
-          # also try Openverse (free, no key) as a backup source: only CC0 / public-domain photos
-          ov = []
-          for q in ["indian woman skincare","woman applying face cream","woman washing face","woman applying sunscreen","woman skincare night","woman removing makeup"]:
-              u = "https://api.openverse.org/v1/images/?" + urllib.parse.urlencode({"q": q, "license": "cc0,pdm", "page_size": 20, "category": "photograph"})
-              try:
-                  d = json.load(urllib.request.urlopen(urllib.request.Request(u, headers=H), timeout=30))
-                  for r in d.get("results", []): ov.append({"id": r["id"], "q": q, "title": r.get("title"), "src": r.get("source"), "url": r["url"], "thumb": r.get("thumbnail"), "page": r.get("foreign_landing_url"), "license": r.get("license"), "by": r.get("creator")})
-              except Exception as e: open("cand/errors.txt", "a").write(f"openverse {q}: {e}\n")
-          json.dump(ov, open("cand/openverse.json", "w"), indent=1)
-          for i, k in enumerate(ov):
-              try: urllib.request.urlretrieve(k["thumb"] or k["url"], f"cand/ov{i:03d}.jpg")
-              except Exception as e: pass
-          for q in qs:
-              for page in (1, 2):
-                  u = "https://unsplash.com/napi/search/photos?" + urllib.parse.urlencode({"query": q, "per_page": 30, "page": page})
-                  try: d = json.load(urllib.request.urlopen(urllib.request.Request(u, headers=H), timeout=30))
-                  except Exception as e:
-                      body = getattr(e, "read", lambda: b"")()[:300]
-                      open("cand/errors.txt", "a").write(f"{q} p{page}: {e} {body!r}\n"); continue
-                  for r in d.get("results", []):
-                      if r["id"] in seen or r.get("premium") or r.get("plus"): continue
-                      seen.add(r["id"])
-                      keep.append({"id": r["id"], "q": q, "w": r["width"], "h": r["height"], "alt": r.get("alt_description"), "desc": r.get("description"),
-                                   "by": r["user"]["name"], "page": r["links"]["html"], "raw": r["urls"]["raw"]})
-          print("free candidates:", len(keep))
-          for i, k in enumerate(keep):
-              try:
-                  urllib.request.urlretrieve(k["raw"] + "&w=360&q=60&fm=jpg", f"cand/{i:03d}_{k['id']}.jpg")
-              except Exception as e: print("thumb failed", k["id"], e)
-          json.dump(keep, open("cand/index.json", "w"), indent=1)
-          PY
-      - name: Save
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cand && git commit -m "Free photo candidates" && git push
+      - run: |
+          mkdir -p yf
+          for f in youth-face-routine-apply-cream.jpg youth-face-routine-pat-dry.jpg youth-face-routine-cleanse.jpg anti-aging-routine-30s.jpg oily-skin-routine-india.jpg; do
+            curl -fsSL -A "Mozilla/5.0" "https://youthfacebeauty.com/wp-content/uploads/2026/09/$f" -o "yf/$f" || echo "failed $f"
+          done
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add yf && git commit -m "Youth Face routine photos" && git push

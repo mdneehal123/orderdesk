@@ -23,7 +23,9 @@ Orders are saved online on your own Vercel site, so every phone and laptop sees 
    - Name: `ORDER_DESK_PASSWORD`
    - Value: your own strong password
 3. Open **Deployments** and click **Redeploy** on the latest one.
-4. Open your Order Desk (log in with any username and that password), go to **Settings → Online storage**, type the same password and tap **Connect**.
+4. Open your Order Desk at **https://skinday.shop** and log in (username: anything, password: the one above). The desk connects to online storage by itself and shows all saved orders. (If it ever doesn't, go to **Settings → Online storage**, type the same password and tap **Connect**.)
+
+**Your links:** desk https://skinday.shop · customer form https://skinday.shop/form/ (the old orderdesk-chi.vercel.app links still work).
 5. Do step 4 once on each phone or laptop.
 
 The top bar shows the status: a green dot means saved online, and "Wrong password" means the password doesn't match the one in Vercel. Every device also keeps its own copy, so it keeps working offline and catches up when it's back online.

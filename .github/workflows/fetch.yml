@@ -1,0 +1,27 @@
+name: Copy Mirc Glow photos from WordPress
+on:
+  push:
+    branches: [mg-photos]
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download photos
+        run: |
+          ok=0; bad=0
+          while read -r u; do
+            [ -z "$u" ] && continue
+            if curl -fsSL --retry 3 -A "Mozilla/5.0 (compatible; MircGlowMigration)" "https://mircglow.com$u" -o "photos$u" --create-dirs; then ok=$((ok+1)); else echo "FAILED $u"; bad=$((bad+1)); fi
+          done < list.txt
+          echo "downloaded $ok, failed $bad"
+          ls -la photos/wp-content/uploads/2026/09 | head -40
+      - name: Save photos to this branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add photos
+          git commit -m "Mirc Glow photos copied from WordPress" || echo "nothing new"
+          git push

@@ -4,7 +4,7 @@
 
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-const PASSWORD = process.env.ORDER_DESK_PASSWORD;
+const PASSWORD = (process.env.ORDER_DESK_PASSWORD || "").trim();
 const ORDERS = "od:orders", SETTINGS = "od:settings", INBOX = "od:inbox";
 
 async function redis(cmd) {

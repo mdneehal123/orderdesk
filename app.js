@@ -331,7 +331,7 @@ const isTouch = () => matchMedia("(pointer:coarse)").matches;
    (WhatsApp app on phones, WhatsApp Web/Desktop on computers) with the message typed in. */
 function waHref(o, kind) {
   if (phone10(o.phone).length !== 10) return "";
-  const text = kind === "track" || (kind !== "confirm" && o.awb) ? trackingMessage(o) : templates(o)[0][1];
+  const text = trackingMessage(o); // one message: with tracking if added, without if not
   return waLink(o.phone, text);
 }
 function waAnchor(o, cls, inner, kind, extra) {
@@ -342,10 +342,9 @@ function waAnchor(o, cls, inner, kind, extra) {
 // When a WhatsApp link is tapped: let the link open the chat, and also copy the label picture (if dispatched) and remember it was sent.
 document.addEventListener("click", e => {
   const a = e.target.closest("a[data-wa]"); if (!a) return; const o = orders[a.dataset.wa]; if (!o) return;
-  const tracking = a.dataset.kind === "track" || (a.dataset.kind !== "confirm" && o.awb);
-  if (tracking) {
+  { // the label picture is copied every time, ready to paste in the chat
     try { if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) navigator.clipboard.write([new ClipboardItem({ "image/png": labelBlob(o) })]).then(() => toast(isTouch() ? "Label copied: long-press the message box → Paste to add it." : "Label copied: press Ctrl+V in the chat to add it."), () => {}); } catch (x) {}
-    setTimeout(() => { markSent(o); if (route() === "dispatch") vDispatch(); else if (route() === "dashboard") vDashboard(); }, 400);
+    setTimeout(() => { if (o.awb) markSent(o); if (route() === "dispatch") vDispatch(); else if (route() === "dashboard") vDashboard(); }, 400);
   }
 });
 function markSent(o) { if (orders[o.id] && !orders[o.id].trackingSentAt) patch(o.id, { trackingSentAt: new Date().toISOString() }); }
@@ -385,8 +384,20 @@ function prodPhrase(o) {
   return n.slice(0, -1).join(", ") + " & " + n[n.length - 1];
 }
 const signoff = () => (settings.signoff || "With love, Team skinday.in 💛");
+/* ONE WhatsApp message per order: with tracking details once an AWB is added, without them before. */
 function trackingMessage(o) {
   const first = (o.name || "").split(" ")[0]; const p = prodPhrase(o); const many = pcs(o) > 1;
+  if (!o.awb) return [
+    `✨ *Your ${p} order is confirmed!* ✨`, "",
+    `Hi ${first}, thank you for your order.`, "",
+    `📦 Order: *${o.id}*`,
+    ...(o.items || []).map(i => `   • ${i.qty} x ${i.name}`),
+    `📍 Delivery to: ${[o.address, o.city, o.pin].filter(Boolean).join(", ")}`,
+    `✅ Prepaid: nothing to pay at delivery`,
+    `🚚 We'll pack it with love and share the tracking details once it's dispatched.`, "",
+    `_"${quoteFor(o)}"_`, "",
+    signoff(),
+  ].join("\n");
   const lines = [
     `✨ *Your ${p} ${many ? "are" : "is"} on the way!* ✨`, "",
     `Hi ${first},`, `Your parcel has been packed with love and handed to the courier.`, "",
@@ -405,9 +416,8 @@ function trackingMessage(o) {
 }
 function templates(o) {
   const b = brandById(o.brand); const first = (o.name || "").split(" ")[0]; const items = itemsText(o); const p = prodPhrase(o);
-  const t = [["Confirm order", `Hi ${first}, thank you for ordering ${p}!\n\nOrder: ${o.id}\n${items}\nPrepaid ✓\n\nDelivery address:\n${o.address}, ${o.city} ${o.pin}\n\nWe'll pack it with love and send you the tracking details once it's dispatched. 💛`]];
+  const t = [[o.awb ? "Order + tracking" : "Order message", trackingMessage(o)]];
   if (!o.paid) t.push(["Ask for payment", `Hi ${first}, your order for ${p} (${o.id}) is ready.\n\nPlease pay with Google Pay / any UPI app${b.upi ? " to " + b.upi : ""} and send the payment screenshot. We ship as soon as payment is received.`]);
-  if (o.awb) t.push(["Tracking (text only)", trackingMessage(o)]);
   if (o.status === "ofd") t.push(["Out for delivery", `Hi ${first}, your ${p} ${pcs(o) > 1 ? "are" : "is"} out for delivery today${o.courier ? " with " + o.courier : ""}. Please keep your phone reachable.`]);
   t.push(["How to use", `Hi ${first}, we hope your ${p} reached you safely!\n\nQuick tips: patch test first, apply a small amount on clean skin, and use sunscreen in the day.\n\nAny questions, just reply here.`]);
   t.push(["Ask for review", `Hi ${first}, how are you finding your ${p}? A short honest reply (and a photo, if you like) really helps us. Thank you!`]);

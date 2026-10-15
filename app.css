@@ -358,3 +358,17 @@ tr:last-child td{border-bottom:0}
 @keyframes sheetUp{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
 /* opened from the Home Screen: no browser bars, keep content clear of the notch */
 @media (display-mode: standalone) and (max-width:820px){ .bar{padding-top:max(14px,env(safe-area-inset-top))} }
+
+/* refresh button + pull to refresh */
+.refresh{display:grid;place-items:center;width:36px;height:36px;min-width:36px;border-radius:50%;border:0;background:var(--ink2);color:#fff;flex:0 0 auto;padding:0}
+.refresh:active{transform:scale(.92)}
+body.refreshing .refresh svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 58px);z-index:40;width:40px;height:40px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);transform:translate(-50%,-80px);opacity:0;pointer-events:none;transition:opacity .15s}
+.ptr.show{opacity:1;transition:none}
+.ptr.ready{background:var(--hi)}
+.ptr.on{opacity:1;background:var(--hi);transform:translate(-50%,40px)}
+.ptr.on svg{animation:spin .8s linear infinite}
+@media (max-width:820px){ .bar{gap:8px} .bar .logo{font-size:.9rem;letter-spacing:.02em} .brandpick{max-width:none} .refresh,.sync{width:34px;height:34px;min-width:34px} }
+@media (max-width:380px){ .brandpick .dot{display:none} .brandpick select{padding-left:2px;padding-right:22px} .brandpick{padding-left:8px} }

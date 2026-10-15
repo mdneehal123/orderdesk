@@ -611,6 +611,24 @@ function renderBrandPick() {
 }
 $("#brandsel").addEventListener("change", e => { device.brand = e.target.value; saveDevice(); ui.formBrand = null; render(); });
 $("#syncbtn").addEventListener("click", () => syncNow(false));
+/* Refresh: get the newest orders, then reload so the app also picks up any update. Button at the top, or pull down on any page. */
+let refreshing = false;
+async function doRefresh() {
+  if (refreshing) return; refreshing = true;
+  document.body.classList.add("refreshing"); const p = $("#ptr"); if (p) { p.style.transform = ""; p.classList.add("on"); }
+  try { if (device.sheetUrl) { let n = 0; while (syncing && n++ < 40) await new Promise(r => setTimeout(r, 250)); await syncNow(true); } } catch (e) {}
+  location.reload();
+}
+$("#refreshbtn").addEventListener("click", doRefresh);
+(function pullToRefresh() {
+  const p = $("#ptr"); let y0 = null, dy = 0; const MAX = 90, GO = 70;
+  const can = e => window.scrollY <= 0 && !refreshing && $("#moreSheet").hidden && !e.target.closest("input,textarea,select,video,.ord-scroll");
+  document.addEventListener("touchstart", e => { y0 = can(e) && e.touches.length === 1 ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  document.addEventListener("touchmove", e => { if (y0 === null) return; dy = e.touches[0].clientY - y0; if (dy <= 0 || window.scrollY > 0) { p.classList.remove("show"); return; }
+    const d = Math.min(MAX, dy * 0.5); p.classList.add("show"); p.classList.toggle("ready", d >= GO); p.style.transform = `translate(-50%, ${d}px) rotate(${d * 4}deg)`; }, { passive: true });
+  document.addEventListener("touchend", () => { if (y0 === null) return; const go = p.classList.contains("ready"); y0 = null; p.classList.remove("ready");
+    if (go) doRefresh(); else { p.classList.remove("show"); p.style.transform = ""; } }, { passive: true });
+})();
 
 /* ------------------------------------------------------------------ views */
 /* Courier pickup closes at 6 pm. An order added before 6 pm must be dispatched the same day;

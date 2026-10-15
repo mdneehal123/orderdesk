@@ -1,4 +1,4 @@
-name: Copy routine photos to look at
+name: Read live mircglow.com SEO tags
 on:
   push:
     branches: [mg-photos]
@@ -9,10 +9,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Crawl sitemap and read each page's SEO tags
+        run: |
+          python3 - <<'PY'
+          import re, json, urllib.request, html, time
+          H = {"User-Agent": "Mozilla/5.0 (compatible; MircGlowMigrationCheck)"}
+          def get(u):
+              try:
+                  r = urllib.request.urlopen(urllib.request.Request(u, headers=H), timeout=40)
+                  return r.status, r.geturl(), r.read().decode("utf-8", "replace")
+              except urllib.error.HTTPError as e: return e.code, u, ""
+              except Exception as e: return 0, u, str(e)
+          st, _, idx = get("https://mircglow.com/sitemap_index.xml")
+          maps = re.findall(r"<loc>(.*?)</loc>", idx)
+          urls = []
+          for m in maps:
+              _, _, x = get(m); urls += re.findall(r"<loc>(.*?)</loc>", x)
+          urls = [u for u in dict.fromkeys(urls) if "/wp-content/" not in u]
+          out = {"sitemaps": maps, "pages": []}
+          for u in urls:
+              s, final, h = get(u + ("&" if "?" in u else "?") + "nc=" + str(int(time.time())))
+              g = lambda p: (lambda m: html.unescape(m.group(1)).strip() if m else None)(re.search(p, h, re.S | re.I))
+              out["pages"].append({"url": u, "status": s, "final": final.split("?nc=")[0],
+                  "title": g(r"<title>(.*?)</title>"), "desc": g(r'<meta name="description" content="([^"]*)"'),
+                  "canonical": g(r'<link rel="canonical" href="([^"]*)"'), "robots": g(r'<meta name="robots" content="([^"]*)"'),
+                  "h1": [re.sub(r"<[^>]+>", "", x).strip() for x in re.findall(r"<h1[^>]*>(.*?)</h1>", h, re.S | re.I)],
+                  "schema_types": sorted(set(re.findall(r'"@type":"([A-Za-z]+)"', h)))})
+          json.dump(out, open("wp_seo.json", "w"), indent=1, ensure_ascii=False)
+          print(len(out["pages"]), "pages")
+          PY
       - run: |
-          mkdir -p yf
-          for f in youth-face-routine-apply-cream.jpg youth-face-routine-pat-dry.jpg youth-face-routine-cleanse.jpg anti-aging-routine-30s.jpg oily-skin-routine-india.jpg; do
-            curl -fsSL -A "Mozilla/5.0" "https://youthfacebeauty.com/wp-content/uploads/2026/09/$f" -o "yf/$f" || echo "failed $f"
-          done
           git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add yf && git commit -m "Youth Face routine photos" && git push
+          git add wp_seo.json && git commit -m "Live WordPress SEO snapshot" && git push

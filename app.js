@@ -603,12 +603,24 @@ $("#brandsel").addEventListener("change", e => { device.brand = e.target.value; 
 $("#syncbtn").addEventListener("click", () => syncNow(false));
 
 /* ------------------------------------------------------------------ views */
-/* Orders added before today that still have no tracking = late. Shown in red on the home and Dispatch pages. */
-function daysLate(o) { const d = o.date || (o.createdAt || "").slice(0, 10); if (!d || !TOSHIP.includes(o.status)) return 0; return Math.max(0, Math.round((new Date(today()) - new Date(d)) / 864e5)); }
+/* Courier pickup closes at 6 pm. An order added before 6 pm must be dispatched the same day;
+   an order added after 6 pm must be dispatched by 6 pm the next day. After that deadline it shows in red. */
+const CUTOFF_HOUR = 18;
+function dueTime(o) {
+  const c = o.createdAt ? new Date(o.createdAt) : new Date((o.date || today()) + "T09:00:00");
+  const d = new Date(c); d.setHours(CUTOFF_HOUR, 0, 0, 0);
+  if (c >= d) d.setDate(d.getDate() + 1);
+  return d;
+}
+function daysLate(o) { // 0 = not late; 1 = missed today's pickup; 2+ = days overdue
+  if (!TOSHIP.includes(o.status)) return 0; const due = dueTime(o); const now = new Date();
+  if (now < due) return 0; return 1 + Math.floor((now - due) / 864e5);
+}
+const lateText = n => n <= 1 ? "Missed pickup" : `${n - 1} day${n - 1 > 1 ? "s" : ""} late`;
 function lateBox(list) {
   if (!list.length) return "";
-  return `<section class="card late" role="alert" aria-labelledby="h-late"><div class="late-head"><div><h2 id="h-late">⚠ Dispatch now · ${list.length} order${list.length > 1 ? "s" : ""} not dispatched</h2><p>Added on an earlier day and still waiting for tracking. Please ship ${list.length > 1 ? "these" : "this"} as soon as possible.</p></div><a class="btn" href="#dispatch">Go to Dispatch</a></div>
-  <ul class="late-list">${list.map(o => `<li><b>${esc(o.name)}</b><span>${esc(itemsText(o))}</span><span class="mono">${esc(o.id)}</span><span class="late-tag">${daysLate(o)} day${daysLate(o) > 1 ? "s" : ""} late</span><a class="btn sm" href="#orders?${encodeURIComponent(o.id)}">Add tracking</a></li>`).join("")}</ul></section>`;
+  return `<section class="card late" role="alert" aria-labelledby="h-late"><div class="late-head"><div><h2 id="h-late">⚠ Dispatch now · ${list.length} order${list.length > 1 ? "s" : ""} not dispatched</h2><p>Not dispatched before the 6 pm courier pickup. Please ship ${list.length > 1 ? "these" : "this"} first thing.</p></div><a class="btn" href="#dispatch">Go to Dispatch</a></div>
+  <ul class="late-list">${list.map(o => `<li><b>${esc(o.name)}</b><span>${esc(itemsText(o))}</span><span class="mono">${esc(o.id)}</span><span class="late-tag">${lateText(daysLate(o))}</span><a class="btn sm" href="#orders?${encodeURIComponent(o.id)}">Add tracking</a></li>`).join("")}</ul></section>`;
 }
 function vDashboard() {
   const L = live().filter(inBrand); const t = today();
@@ -951,7 +963,7 @@ function vDispatch() {
   const older = allDone.length - allDone.filter(o => (o.shippedAt || o.updatedAt || "").slice(0, 10) >= wk).length;
   $("#view").innerHTML = `<div class="head"><div><h1>Dispatch</h1><p class="sub">Add courier and AWB for each parcel you hand over. Press Enter to jump to the next row (works with a barcode scanner).</p></div>
     <div class="f"><label>Courier for all rows</label><select id="allcour"><option value="">Choose…</option>${COURIERS.map(c => `<option>${esc(c)}</option>`).join("")}</select></div></div>
-  ${list.length ? `<div class="tbl"><table class="dt"><thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Payment</th><th>Courier</th><th>AWB / consignment no.</th></tr></thead><tbody>${list.map(o => { const b = brandById(o.brand); return `<tr data-id="${esc(o.id)}"${daysLate(o) ? ' class="late-row"' : ""}><td><span class="tag t-brand" style="--bc:${b.color}">${esc(b.prefix)}</span> <span class="mono">${esc(o.id)}</span>${daysLate(o) ? `<div><span class="late-tag">${daysLate(o)} day${daysLate(o) > 1 ? "s" : ""} late</span></div>` : ""}</td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td class="mono">${esc(o.pin)}<div class="hint">${esc(o.city)}</div></td><td>${payTag(o)}</td>
+  ${list.length ? `<div class="tbl"><table class="dt"><thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Payment</th><th>Courier</th><th>AWB / consignment no.</th></tr></thead><tbody>${list.map(o => { const b = brandById(o.brand); return `<tr data-id="${esc(o.id)}"${daysLate(o) ? ' class="late-row"' : ""}><td><span class="tag t-brand" style="--bc:${b.color}">${esc(b.prefix)}</span> <span class="mono">${esc(o.id)}</span>${daysLate(o) ? `<div><span class="late-tag">${lateText(daysLate(o))}</span></div>` : ""}</td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td class="mono">${esc(o.pin)}<div class="hint">${esc(o.city)}</div></td><td>${payTag(o)}</td>
     <td><select data-c><option value="">—</option>${COURIERS.map(c => `<option${o.courier === c ? " selected" : ""}>${esc(c)}</option>`).join("")}</select></td><td><input class="mono" data-w autocomplete="off" placeholder="Scan or type" value="${esc(o.awb || "")}"></td></tr>`; }).join("")}</tbody></table></div>
     <div class="actions" style="margin-top:12px"><button class="btn hi" id="dsaveall">Save &amp; mark dispatched</button><span class="hint">Only rows with an AWB number are saved.</span></div>`
   : `<div class="empty"><h2>Nothing waiting to dispatch</h2><p>Orders that are new, paid or packed appear here.</p></div>`}
@@ -1153,5 +1165,6 @@ function start() {
 }
 // libraries load with defer; re-render once they're ready so barcodes appear
 window.addEventListener("load", () => { if (!$("#app").hidden) render(); });
+let lateSeen = -1; setInterval(() => { if ($("#app").hidden) return; const n = live().filter(o => daysLate(o) > 0).length; if (lateSeen !== -1 && n !== lateSeen && ["dashboard", "dispatch"].includes(route())) render(); lateSeen = n; }, 60000);
 boot();
 })();

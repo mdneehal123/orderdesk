@@ -1,0 +1,1444 @@
+{
+ "sitemaps": [
+  "https://mircglow.com/post-sitemap.xml",
+  "https://mircglow.com/page-sitemap.xml",
+  "https://mircglow.com/product-sitemap.xml",
+  "https://mircglow.com/category-sitemap.xml",
+  "https://mircglow.com/product_cat-sitemap.xml"
+ ],
+ "pages": [
+  {
+   "url": "https://mircglow.com/blog/",
+   "status": 200,
+   "final": "https://mircglow.com/blog/",
+   "title": "Skincare Blog: Night Cream, Glutathione and Glass Skin Guides | Mirc Glow",
+   "desc": "Plain-English skincare guides from Mirc Glow on night creams, glutathione, kojic acid, avocado care and glass skin routines for Indian skin.",
+   "canonical": "https://mircglow.com/blog/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Blog",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "CollectionPage",
+    "ContactPoint",
+    "ListItem",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/kojic-acid-cream-for-dark-spots/",
+   "status": 200,
+   "final": "https://mircglow.com/kojic-acid-cream-for-dark-spots/",
+   "title": "Kojic Acid Cream for Dark Spots: 7 Tips for Best Results | Mirc Glow",
+   "desc": "Using kojic acid cream for dark spots? Learn what it is, how to apply it, how long it takes, and 7 simple tips to get better results without irritation.",
+   "canonical": "https://mircglow.com/kojic-acid-cream-for-dark-spots/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Kojic Acid Cream for Dark Spots: How to Use It and What to Expect",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/night-cream-for-men/",
+   "status": 200,
+   "final": "https://mircglow.com/night-cream-for-men/",
+   "title": "Night Cream for Men: 5 Easy Steps to Better-Looking Skin | Mirc Glow",
+   "desc": "A no-fuss guide to night cream for men in India: why it helps, how to choose one, and 5 easy steps for a two-minute evening routine.",
+   "canonical": "https://mircglow.com/night-cream-for-men/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Night Cream for Men: A Simple Guide to Getting Started",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/night-cream-for-oily-skin/",
+   "status": 200,
+   "final": "https://mircglow.com/night-cream-for-oily-skin/",
+   "title": "Night Cream for Oily Skin: 6 Simple Rules That Work | Mirc Glow",
+   "desc": "Does oily skin need a night cream? Yes. Learn 6 simple rules for choosing and using a night cream for oily skin without shine, heaviness or breakouts.",
+   "canonical": "https://mircglow.com/night-cream-for-oily-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Night Cream for Oily Skin: How to Choose and Use One",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/best-night-cream-for-glowing-skin/",
+   "status": 200,
+   "final": "https://mircglow.com/best-night-cream-for-glowing-skin/",
+   "title": "Best Night Cream for Glowing Skin in India: 7 Things to Check | Mirc Glow",
+   "desc": "Looking for the best night cream for glowing skin in India? Learn the 7 things to check, the ingredients that matter, and how to choose by skin type.",
+   "canonical": "https://mircglow.com/best-night-cream-for-glowing-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Best Night Cream for Glowing Skin in India: How to Choose",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/glass-skin-routine-for-indian-skin/",
+   "status": 200,
+   "final": "https://mircglow.com/glass-skin-routine-for-indian-skin/",
+   "title": "Glass Skin Routine for Indian Skin: 6 Simple Steps That Work | Mirc Glow",
+   "desc": "Follow this glass skin routine for Indian skin: 6 simple steps adapted for heat, humidity and strong sun, with morning and night routines for every skin type.",
+   "canonical": "https://mircglow.com/glass-skin-routine-for-indian-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Glass Skin Routine for Indian Skin: 6 Simple Steps",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/kojic-acid-vs-glutathione/",
+   "status": 200,
+   "final": "https://mircglow.com/kojic-acid-vs-glutathione/",
+   "title": "Kojic Acid vs Glutathione: 5 Key Differences Explained | Mirc Glow",
+   "desc": "Kojic acid vs glutathione: learn the 5 key differences, which ingredient suits your skin goal, and whether you can safely use both together.",
+   "canonical": "https://mircglow.com/kojic-acid-vs-glutathione/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Kojic Acid vs Glutathione: Which Is Right for Your Skin?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/how-to-use-glutathione-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/how-to-use-glutathione-cream/",
+   "title": "How to Use Glutathione Cream: 5 Easy Steps for Best Results | Mirc Glow",
+   "desc": "Learn how to use glutathione cream in 5 easy steps: when to apply it, how much to use, what to pair it with, and the common mistakes to avoid.",
+   "canonical": "https://mircglow.com/how-to-use-glutathione-cream/",
+   "robots": "follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "How to Use Glutathione Cream: A Step-by-Step Routine",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/how-long-does-glutathione-cream-take-to-work/",
+   "status": 200,
+   "final": "https://mircglow.com/how-long-does-glutathione-cream-take-to-work/",
+   "title": "How Long Does Glutathione Cream Take to Work? 12-Week Guide | Mirc Glow",
+   "desc": "How long does glutathione cream take to work? See an honest week-by-week timeline over 12 weeks, plus 5 simple habits that help you get better results.",
+   "canonical": "https://mircglow.com/how-long-does-glutathione-cream-take-to-work/",
+   "robots": "follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "How Long Does Glutathione Cream Take to Work?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/glutathione-cream-side-effects/",
+   "status": 200,
+   "final": "https://mircglow.com/glutathione-cream-side-effects/",
+   "title": "Glutathione Cream Side Effects: 4 Things to Watch For | Mirc Glow",
+   "desc": "Glutathione cream side effects are uncommon and usually mild. Learn the 4 things to watch for, who should be careful, and how to patch test and start safely.",
+   "canonical": "https://mircglow.com/glutathione-cream-side-effects/",
+   "robots": "follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Glutathione Cream Side Effects: What Is Known and How to Stay Safe",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/glutathione-cream-benefits/",
+   "status": 200,
+   "final": "https://mircglow.com/glutathione-cream-benefits/",
+   "title": "Glutathione Cream Benefits: 6 Honest Facts for Beginners | Mirc Glow",
+   "desc": "Glutathione cream benefits explained in plain words: 6 honest facts on what it can do for how your skin looks, what it cannot do, and how to use it well.",
+   "canonical": "https://mircglow.com/glutathione-cream-benefits/",
+   "robots": "follow, index, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Glutathione Cream Benefits: A Simple Guide for Beginners",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/avocado-night-cream-side-effects/",
+   "status": 200,
+   "final": "https://mircglow.com/avocado-night-cream-side-effects/",
+   "title": "Avocado Night Cream Side Effects: 5 Things to Know | Mirc Glow",
+   "desc": "Avocado night cream side effects are uncommon and usually mild. Learn the 5 things to watch for, who should be careful, and how to patch test before you start.",
+   "canonical": "https://mircglow.com/avocado-night-cream-side-effects/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Avocado Night Cream Side Effects: What to Know Before You Start",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/avocado-cream-for-dry-skin/",
+   "status": 200,
+   "final": "https://mircglow.com/avocado-cream-for-dry-skin/",
+   "title": "Avocado Cream for Dry Skin: 5 Simple Ways to Use It | Mirc Glow",
+   "desc": "Dry, tight skin after washing? See why avocado cream for dry skin makes sense, 5 simple ways to use it so it really helps, and what to change in winter.",
+   "canonical": "https://mircglow.com/avocado-cream-for-dry-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Avocado Cream for Dry Skin: Why It Works and How to Use It",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/how-to-apply-night-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/how-to-apply-night-cream/",
+   "title": "How to Apply Night Cream: 6 Easy Steps Most People Skip | Mirc Glow",
+   "desc": "Most people use too much and apply it at the wrong time. Learn how to apply night cream in 6 easy steps, how much to use, and what order to follow.",
+   "canonical": "https://mircglow.com/how-to-apply-night-cream/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "How to Apply Night Cream the Right Way",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/how-to-build-a-simple-night-skincare-routine/",
+   "status": 200,
+   "final": "https://mircglow.com/how-to-build-a-simple-night-skincare-routine/",
+   "title": "Simple Night Skincare Routine: 4 Easy Steps | Mirc Glow",
+   "desc": "Build a simple night skincare routine in 4 easy steps: cleanse, tone, treat and moisturise. What to use, in what order, and how long it takes.",
+   "canonical": "https://mircglow.com/how-to-build-a-simple-night-skincare-routine/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "How to Build a Simple Night Skincare Routine",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/glutathione-in-skincare-what-it-is-and-how-it-fits-into-a-routine/",
+   "status": 200,
+   "final": "https://mircglow.com/glutathione-in-skincare-what-it-is-and-how-it-fits-into-a-routine/",
+   "title": "Glutathione in Skincare: What It Is and How to Use It | Mirc Glow",
+   "desc": "What glutathione is, why it appears in brightening-focused skincare, and where it fits in a simple morning and night routine.",
+   "canonical": "https://mircglow.com/glutathione-cream-benefits/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Glutathione in Skincare: What It Is and How It Fits Into a Routine",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/kojic-acid-in-skincare-a-guide-to-brightening-focused-care/",
+   "status": 200,
+   "final": "https://mircglow.com/kojic-acid-in-skincare-a-guide-to-brightening-focused-care/",
+   "title": "Kojic Acid in Skincare: What It Does and How to Use It | Mirc Glow",
+   "desc": "What kojic acid is, why it is used in skincare for a more even-looking tone, and how to add it to your routine without irritation.",
+   "canonical": "https://mircglow.com/kojic-acid-cream-for-dark-spots/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Kojic Acid in Skincare: A Guide to Brightening-Focused Care",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/glass-skin-routine-steps-for-a-smooth-hydrated-looking-glow/",
+   "status": 200,
+   "final": "https://mircglow.com/glass-skin-routine-steps-for-a-smooth-hydrated-looking-glow/",
+   "title": "Glass Skin Routine Steps for a Smooth, Dewy Look | Mirc Glow",
+   "desc": "The basic glass skin routine steps for a smooth, hydrated-looking glow, and how to keep the routine light enough to follow every day.",
+   "canonical": "https://mircglow.com/glass-skin-routine-for-indian-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Glass Skin Routine: Steps for a Smooth, Hydrated-Looking Glow",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/korean-skincare-glass-skin-building-a-simple-glow-focused-routine/",
+   "status": 200,
+   "final": "https://mircglow.com/korean-skincare-glass-skin-building-a-simple-glow-focused-routine/",
+   "title": "Korean Skincare and Glass Skin: A Simple Routine | Mirc Glow",
+   "desc": "What Korean skincare and glass skin really mean, and how to build a simple glow-focused routine without ten steps.",
+   "canonical": "https://mircglow.com/glass-skin-routine-for-indian-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Korean Skincare &#038; Glass Skin: Building a Simple Glow-Focused Routine",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/which-is-the-no-1-night-cream-in-india/",
+   "status": 200,
+   "final": "https://mircglow.com/which-is-the-no-1-night-cream-in-india/",
+   "title": "Which Is the No. 1 Night Cream in India? How to Choose | Mirc Glow",
+   "desc": "Which is the no. 1 night cream in India? Learn what to consider when choosing a night cream based on ingredients, skin needs, texture and routine.",
+   "canonical": "https://mircglow.com/which-is-the-no-1-night-cream-in-india/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Which Is the No. 1 Night Cream in India?",
+    "Which Is the No. 1 Night Cream in India?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/a-brighter-looking-skincare-routine-made-simple/",
+   "status": 200,
+   "final": "https://mircglow.com/a-brighter-looking-skincare-routine-made-simple/",
+   "title": "Avocado Night Cream Benefits for Soft, Nourished Skin | Mirc Glow",
+   "desc": "The main avocado night cream benefits for dry and tired-looking skin, how it works overnight, and how to use it for the best feel by morning.",
+   "canonical": "https://mircglow.com/is-avocado-night-cream-good/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Avocado Night Cream: Benefits for Hydrated, Nourished-Looking Skin",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/can-i-use-avocado-night-cream-every-night/",
+   "status": 200,
+   "final": "https://mircglow.com/can-i-use-avocado-night-cream-every-night/",
+   "title": "Can I Use Avocado Night Cream Every Night? | Mirc Glow",
+   "desc": "Can you use avocado night cream every night? Learn how to use night cream comfortably and what to consider for your evening skincare routine.",
+   "canonical": "https://mircglow.com/can-i-use-avocado-night-cream-every-night/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Can I Use Avocado Night Cream Every Night?",
+    "Can I Use Avocado Night Cream Every Night?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/how-to-make-avocado-night-cream-at-home/",
+   "status": 200,
+   "final": "https://mircglow.com/how-to-make-avocado-night-cream-at-home/",
+   "title": "How to Make Avocado Night Cream at Home? | Mirc Glow",
+   "desc": "Learn how to make avocado night cream at home, explore simple ingredients and skincare considerations, and discover what to know before using homemade formulas.",
+   "canonical": "https://mircglow.com/how-to-make-avocado-night-cream-at-home/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "How to Make Avocado Night Cream at Home?",
+    "How to Make Avocado Night Cream at Home?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/is-avocado-face-cream-good-for-glowing-skin/",
+   "status": 200,
+   "final": "https://mircglow.com/is-avocado-face-cream-good-for-glowing-skin/",
+   "title": "Is Avocado Face Cream Good for Glowing Skin? | Mirc Glow",
+   "desc": "Can avocado face cream help skin look glowing? What avocado does, what it cannot do, and how to use it in a simple glow routine.",
+   "canonical": "https://mircglow.com/is-avocado-cream-good-for-your-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Is Avocado Face Cream Good for Glowing Skin?",
+    "Is Avocado Face Cream Good for Glowing Skin?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/is-avocado-good-for-skin-brightening/",
+   "status": 200,
+   "final": "https://mircglow.com/is-avocado-good-for-skin-brightening/",
+   "title": "Is Avocado Good for Skin Brightening? | Mirc Glow",
+   "desc": "Is avocado good for skin brightening? Learn what avocado can offer in a skincare routine and what to consider when choosing an avocado-based formula.",
+   "canonical": "https://mircglow.com/is-avocado-cream-good-for-your-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Is Avocado Good for Skin Brightening?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/is-avocado-night-cream-good/",
+   "status": 200,
+   "final": "https://mircglow.com/is-avocado-night-cream-good/",
+   "title": "Is Avocado Night Cream Good? | Mirc Glow",
+   "desc": "Is avocado night cream good for your skincare routine? Learn about its potential benefits, how to use it, and what to consider when choosing a formula.",
+   "canonical": "https://mircglow.com/is-avocado-night-cream-good/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Is Avocado Night Cream Good?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/is-avocado-cream-good-for-the-face/",
+   "status": 200,
+   "final": "https://mircglow.com/is-avocado-cream-good-for-the-face/",
+   "title": "Is Avocado Cream Good for the Face? | Mirc Glow",
+   "desc": "Is avocado cream good for the face? Learn how avocado-based creams can fit into a simple skincare routine and what to consider when choosing one.",
+   "canonical": "https://mircglow.com/is-avocado-cream-good-for-your-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Is Avocado Cream Good for the Face?",
+    "Is Avocado Cream Good for the Face?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/is-avocado-cream-good-for-your-skin/",
+   "status": 200,
+   "final": "https://mircglow.com/is-avocado-cream-good-for-your-skin/",
+   "title": "Is Avocado Cream Good for Your Skin and Face? Honest Guide | Mirc Glow",
+   "desc": "Is avocado cream good for your skin and face? What it can and cannot do, which skin types it suits, whether it helps skin look brighter, and how to use it.",
+   "canonical": "https://mircglow.com/is-avocado-cream-good-for-your-skin/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Is Avocado Cream Good for Your Skin and Face?",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BlogPosting",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/",
+   "status": 200,
+   "final": "https://mircglow.com/",
+   "title": "Mirc Glow | Avocado Night Creams & Korean-Inspired Skincare",
+   "desc": "Shop Mirc Glow avocado creams in India: avocado night creams and a daily avocado face cream with aloe vera, vitamin B3 and kojic acid. Free shipping and Cash on Delivery.",
+   "canonical": "https://mircglow.com/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Glow with intention.",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "ContactPoint",
+    "ImageObject",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "SearchAction",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/terms/",
+   "status": 200,
+   "final": "https://mircglow.com/terms/",
+   "title": "Terms and Conditions | Mirc Glow",
+   "desc": "The terms that apply when you use mircglow.com or order from Mirc Glow, including pricing, payment, delivery and returns.",
+   "canonical": "https://mircglow.com/terms/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Terms and Conditions",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/privacy/",
+   "status": 200,
+   "final": "https://mircglow.com/privacy/",
+   "title": "Privacy Policy | Mirc Glow",
+   "desc": "How Mirc Glow collects, uses and protects your personal information when you visit mircglow.com or place an order.",
+   "canonical": "https://mircglow.com/privacy/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Privacy Policy",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/contact/",
+   "status": 200,
+   "final": "https://mircglow.com/contact/",
+   "title": "Contact Mirc Glow | WhatsApp +91 99808 81230",
+   "desc": "Contact Mirc Glow for order help, product advice or bulk orders. WhatsApp or call +91 99808 81230. Azad Nagar, Bhatkal, Karnataka.",
+   "canonical": "https://mircglow.com/contact/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Get in Touch",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/shipping-policy/",
+   "status": 200,
+   "final": "https://mircglow.com/shipping-policy/",
+   "title": "Shipping Policy | Mirc Glow",
+   "desc": "Mirc Glow offers free shipping across India with delivery in 3 to 7 days. Cash on Delivery and secure online payment are available.",
+   "canonical": "https://mircglow.com/shipping-policy/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Shipping Policy",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/returns-refunds/",
+   "status": 200,
+   "final": "https://mircglow.com/returns-refunds/",
+   "title": "Returns and Refunds Policy | Mirc Glow",
+   "desc": "Mirc Glow accepts returns of unopened, sealed jars within 7 days of delivery, and of damaged, wrong or expired items. Refunds are made in 5 to 7 working days.",
+   "canonical": "https://mircglow.com/returns-refunds/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Returns and Refunds",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/skincare-routine-builder/",
+   "status": 200,
+   "final": "https://mircglow.com/skincare-routine-builder/",
+   "title": "Skincare Routine Builder: 5 Easy Korean-Style Routines | Mirc Glow",
+   "desc": "Use our skincare routine builder to get a simple morning and night routine for dry, oily, combination, normal or sensitive skin, Korean style.",
+   "canonical": "https://mircglow.com/skincare-routine-builder/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Skincare Routine Builder",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/avocado-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/avocado-cream/",
+   "title": "Avocado Cream: 3 Best Picks for Soft, Nourished Skin | Mirc Glow",
+   "desc": "Shop avocado cream by Mirc Glow in India. Compare 3 avocado creams with aloe vera, vitamin B3 and kojic acid, from ₹349, and find the right one for your skin.",
+   "canonical": "https://mircglow.com/avocado-cream/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Avocado Cream for Soft, Nourished-Looking Skin",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/korean-night-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/korean-night-cream/",
+   "title": "Korean Night Cream: 3 Best Picks for a Glass Skin Glow | Mirc Glow",
+   "desc": "Shop Korean night cream by Mirc Glow in India. Compare 3 Korean-inspired night creams with avocado, vitamin B3 and kojic acid, from ₹649, and learn how to use them.",
+   "canonical": "https://mircglow.com/korean-night-cream/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Korean Night Cream for a Glass-Skin-Inspired Glow",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/faq/",
+   "status": 200,
+   "final": "https://mircglow.com/faq/",
+   "title": "FAQ: Orders, Delivery, Returns and Using Our Creams | Mirc Glow",
+   "desc": "Answers to common questions about Mirc Glow: Cash on Delivery, free shipping, 7-day returns, which cream to choose and how to use it safely.",
+   "canonical": "https://mircglow.com/faq/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Frequently Asked Questions",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/skincare-ingredient-glossary/",
+   "status": 200,
+   "final": "https://mircglow.com/skincare-ingredient-glossary/",
+   "title": "Skincare Ingredient Glossary: 15 Essential K-Beauty Actives | Mirc Glow",
+   "desc": "A plain-English skincare ingredient glossary. Learn what PDRN, exosomes, tranexamic acid, niacinamide, kojic acid, glutathione and 9 more actually do.",
+   "canonical": "https://mircglow.com/skincare-ingredient-glossary/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Skincare Ingredient Glossary",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/ingredients/",
+   "status": 200,
+   "final": "https://mircglow.com/ingredients/",
+   "title": "Our Ingredients: Glutathione, Kojic Acid and Avocado | Mirc Glow",
+   "desc": "The ingredients in Mirc Glow creams, glutathione, kojic acid, vitamin C, vitamin B3, avocado and aloe vera, and what each one does for how skin looks and feels.",
+   "canonical": "https://mircglow.com/ingredients/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Ingredients With Intention",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/about/",
+   "status": 200,
+   "final": "https://mircglow.com/about/",
+   "title": "About Mirc Glow | Korean-Inspired Skincare from Karnataka",
+   "desc": "Mirc Glow is a skincare brand from Bhatkal, Karnataka, making avocado and glutathione creams with aloe vera, vitamin B3 and kojic acid. Meet the brand.",
+   "canonical": "https://mircglow.com/about/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Mirc Glow is a small skincare brand from Bhatkal, Karnataka",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "Article",
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ListItem",
+    "Organization",
+    "Person",
+    "Place",
+    "PostalAddress",
+    "WebPage",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/shop/",
+   "status": 200,
+   "final": "https://mircglow.com/shop/",
+   "title": "Shop Avocado Night Cream and Glutathione Cream | Mirc Glow",
+   "desc": "Shop all Mirc Glow creams and combos from ₹349: avocado night creams, glutathione cream and glass skin kits. Free shipping and Cash on Delivery across India.",
+   "canonical": "https://mircglow.com/shop/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Shop",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "CollectionPage",
+    "ContactPoint",
+    "ListItem",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product/avocado-face-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/product/avocado-face-cream/",
+   "title": "Avocado Face Cream 10g: Best Gentle Daily Moisturiser | Mirc Glow",
+   "desc": "Buy Mirc Glow Avocado Face Cream 10g online in India. A nourishing avocado moisturiser for soft, smooth, radiant-looking skin. Cash on Delivery available.",
+   "canonical": "https://mircglow.com/product/avocado-face-cream/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Avocado Glow Nourishing Skin Cream – 10g",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ItemPage",
+    "ListItem",
+    "Offer",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "Product",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product/glutathione-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/product/glutathione-cream/",
+   "title": "Glutathione Cream with Vitamin C & Kojic Acid 30g: Best for Glow | Mirc Glow",
+   "desc": "Buy Mirc Glow Glutathione Cream 30g online in India. With glutathione, vitamin C and kojic acid for hydrated, radiant-looking skin. Cash on Delivery available.",
+   "canonical": "https://mircglow.com/product/glutathione-cream/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Mirc Glow Glutathione Cream with Vitamin C &amp; Kojic Acid – 30g",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ItemPage",
+    "ListItem",
+    "Offer",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "Product",
+    "PropertyValue",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product/avocado-korean-night-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/product/avocado-korean-night-cream/",
+   "title": "Avocado Korean Night Cream 25g: Best for Even-Looking Skin | Mirc Glow",
+   "desc": "Buy Mirc Glow Avocado Korean Night Cream 25g online in India. An overnight cream with avocado, aloe vera, vitamin B3 and kojic acid. Cash on Delivery available.",
+   "canonical": "https://mircglow.com/product/avocado-korean-night-cream/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "MircGlow Avocado Korean Night Cream for Bright, Even-Looking Skin 25g",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ItemPage",
+    "ListItem",
+    "Offer",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "Product",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product/avocado-night-cream/",
+   "status": 200,
+   "final": "https://mircglow.com/product/avocado-night-cream/",
+   "title": "Avocado Night Cream with Kojic Acid 30g: Best for Dry Skin | Mirc Glow",
+   "desc": "Buy Mirc Glow Avocado Night Cream 30g online in India. A rich avocado night cream with aloe vera, vitamin B3 and kojic acid. Free shipping and Cash on Delivery.",
+   "canonical": "https://mircglow.com/product/avocado-night-cream/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Mirc Glow Avocado Night Cream — Kojic Acid, 30g",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ItemPage",
+    "ListItem",
+    "Offer",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "Product",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product/day-and-night-cream-combo/",
+   "status": 200,
+   "final": "https://mircglow.com/product/day-and-night-cream-combo/",
+   "title": "Day and Night Cream Combo: 2 Best Avocado Creams, 1 Routine | Mirc Glow",
+   "desc": "Buy the Mirc Glow day and night cream combo online in India: Avocado Glow 10g for the day and Avocado Night Cream 30g for the night. Free shipping and COD.",
+   "canonical": "https://mircglow.com/product/day-and-night-cream-combo/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Day and Night Cream Combo – Mirc Glow Avocado Glow 10g + Avocado Night Cream 30g",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ItemPage",
+    "ListItem",
+    "Offer",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "Product",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product/korean-glass-skin-kit/",
+   "status": 200,
+   "final": "https://mircglow.com/product/korean-glass-skin-kit/",
+   "title": "Korean Glass Skin Kit: 3 Best Creams for a Dewy Glow | Mirc Glow",
+   "desc": "Buy the Mirc Glow Korean glass skin kit online in India: 3 Korean-inspired creams for a complete morning and night routine. Free shipping and Cash on Delivery.",
+   "canonical": "https://mircglow.com/product/korean-glass-skin-kit/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Korean Glass Skin Kit – 3 Mirc Glow Korean-Inspired Creams",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ItemPage",
+    "ListItem",
+    "Offer",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "Product",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product/night-cream-combo/",
+   "status": 200,
+   "final": "https://mircglow.com/product/night-cream-combo/",
+   "title": "Night Cream Combo: 2 Best Creams for Glow and Soft Skin | Mirc Glow",
+   "desc": "Buy the Mirc Glow night cream combo online in India: Glutathione Cream 30g plus Avocado Night Cream 30g for radiant-looking, nourished skin. Free shipping and COD.",
+   "canonical": "https://mircglow.com/product/night-cream-combo/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Night Cream Combo – Mirc Glow Glutathione Cream 30g + Avocado Night Cream 30g",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "ContactPoint",
+    "ImageObject",
+    "ItemPage",
+    "ListItem",
+    "Offer",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "Product",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/category/uncategorized/",
+   "status": 200,
+   "final": "https://mircglow.com/category/uncategorized/",
+   "title": "Uncategorized - Mirc Glow",
+   "desc": null,
+   "canonical": null,
+   "robots": "follow, noindex",
+   "h1": [
+    "Mirc Glow",
+    "Category: Uncategorized",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "CollectionPage",
+    "ContactPoint",
+    "ListItem",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/category/skincare-guides/",
+   "status": 200,
+   "final": "https://mircglow.com/category/skincare-guides/",
+   "title": "Skincare Guides - Mirc Glow",
+   "desc": null,
+   "canonical": null,
+   "robots": "follow, noindex",
+   "h1": [
+    "Mirc Glow",
+    "Category: Skincare Guides",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "CollectionPage",
+    "ContactPoint",
+    "ListItem",
+    "Organization",
+    "Place",
+    "PostalAddress",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product-category/night-creams/",
+   "status": 200,
+   "final": "https://mircglow.com/product-category/night-creams/",
+   "title": "Night Creams for Nourished, Radiant-Looking Skin | Mirc Glow",
+   "desc": "Explore Mirc Glow night creams for a comforting evening skincare ritual. Discover avocado, glutathione, Vitamin C and Kojic Acid formulas.",
+   "canonical": "https://mircglow.com/product-category/night-creams/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Night Creams",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "CollectionPage",
+    "ListItem",
+    "Organization",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product-category/night-creams/avocado-night-creams/",
+   "status": 200,
+   "final": "https://mircglow.com/product-category/night-creams/avocado-night-creams/",
+   "title": "Avocado Night Creams for Nourishing Evening Care | Mirc Glow",
+   "desc": "Shop Mirc Glow avocado night creams for a nourishing and comfortable evening skincare routine.",
+   "canonical": "https://mircglow.com/product-category/night-creams/avocado-night-creams/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Avocado Night Creams",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "CollectionPage",
+    "ListItem",
+    "Organization",
+    "WebSite"
+   ]
+  },
+  {
+   "url": "https://mircglow.com/product-category/combos/",
+   "status": 200,
+   "final": "https://mircglow.com/product-category/combos/",
+   "title": "Combos and Kits - Mirc Glow",
+   "desc": "Mirc Glow skincare combos and kits: our creams paired into simple routines at a lower price than buying them separately.",
+   "canonical": "https://mircglow.com/product-category/combos/",
+   "robots": "index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large",
+   "h1": [
+    "Mirc Glow",
+    "Combos and Kits",
+    "Mirc Glow"
+   ],
+   "schema_types": [
+    "BreadcrumbList",
+    "CollectionPage",
+    "ListItem",
+    "Organization",
+    "WebSite"
+   ]
+  }
+ ]
+}

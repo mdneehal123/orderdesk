@@ -5,7 +5,7 @@
 export const config = { matcher: "/:path*" };
 
 const PUBLIC = [/^\/form(\/.*)?$/, /^\/api\/form$/, /^\/api\/catalog$/, /^\/login(\/.*)?$/, /^\/api\/login$/,
-  /^\/manifest\.webmanifest$/, /^\/icons\/.*$/, /^\/robots\.txt$/, /^\/favicon\.ico$/];
+  /^\/manifest\.webmanifest$/, /^\/sw\.js$/, /^\/api\/summary$/, /^\/icons\/.*$/, /^\/robots\.txt$/, /^\/favicon\.ico$/];
 
 async function hmacHex(key, msg) {
   const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);

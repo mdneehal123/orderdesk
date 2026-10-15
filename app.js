@@ -663,6 +663,7 @@ function vDashboard() {
   $("#view").innerHTML = `
   <div class="head"><div><h1>Today · ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</h1><p class="sub">${esc(brandName)}</p></div>
     <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${unprinted.length ? `<button class="btn" id="dlall" type="button" title="One PDF with only the ${unprinted.length} new label(s) not yet printed or downloaded">⬇ PDF · ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share one PDF with the new labels">↗ Share PDF</button>` : ""}</div></div>
+  <div id="pushbanner"></div>
   ${printedWaiting.length ? `<section class="card reprint" aria-labelledby="h-reprint"><div class="reprint-head"><div><h2 id="h-reprint">Label already printed · not dispatched yet (${printedWaiting.length})</h2><p class="hint">These are not in the PDF above. Tap ＋ to put one back, or add them all.</p></div>${printedWaiting.length > 1 ? `<button class="btn sm" type="button" id="reprintall">Add all ${printedWaiting.length} back</button>` : ""}</div>
     <ul class="reprint-list">${printedWaiting.map(o => `<li><b>${esc(o.name)}</b><span>${esc(itemsText(o))}</span><button class="btn sm hi" type="button" data-reprint="${esc(o.id)}" aria-label="Add ${esc(o.name)} back to the PDF">＋ Add back</button></li>`).join("")}</ul></section>` : ""}
   ${lateBox(toShip.filter(o => daysLate(o) > 0).sort((x, y) => daysLate(y) - daysLate(x)))}
@@ -693,6 +694,7 @@ function vDashboard() {
   ${device.sheetUrl ? "" : `<div class="card" style="margin-top:14px;border-color:var(--hi);border-width:2px"><h2>Turn on online storage</h2><p class="hint" style="margin:6px 0 10px">Right now orders are saved only in this browser. Connect online storage so they're safe and shared between your phone and laptop.</p><a class="btn" href="#settings">Connect now</a></div>`}`;
   const pa = $("#printall"); if (pa) pa.onclick = () => printDocs(unprinted, "label", true);
   const dla = $("#dlall"); if (dla) dla.onclick = () => downloadLabels(unprinted);
+  refreshPushUI();
   const rpa = $("#reprintall"); if (rpa) rpa.onclick = () => { printedWaiting.forEach(o => patch(o.id, { printedAt: "" })); toast(`${printedWaiting.length} labels added back to the PDF`); vDashboard(); };
   document.querySelectorAll("[data-reprint]").forEach(b => b.onclick = () => { const o = orders[b.dataset.reprint]; if (!o) return; patch(o.id, { printedAt: "" }); toast(o.name.split(" ")[0] + " added back to the PDF"); vDashboard(); });
   const sha2 = $("#shareall"); if (sha2) sha2.onclick = () => shareLabels(unprinted);
@@ -1092,6 +1094,7 @@ function vReports() {
 /* ---- settings ---- */
 function vSettings() {
   $("#view").innerHTML = `<div class="head"><div><h1>Settings</h1><p class="sub">Brands, products, return addresses, Google Sheet and PIN.</p></div></div>
+  <div class="card stack" id="pushcard" style="margin-bottom:14px"></div>
   <div class="stack" id="brands">${settings.brands.map(brandCard).join("")}</div>
   <div class="actions" style="margin:12px 0 18px"><button class="btn" id="addbrand">+ Add brand</button></div>
   <div class="grid g2">
@@ -1139,6 +1142,7 @@ function vSettings() {
     if (x.dataset.x === "rmb") { if (live().some(o => o.brand === b.id)) { toast("This brand has orders, so it can't be removed."); return; } settings.brands = settings.brands.filter(y => y !== b); }
     settings.updatedAt = new Date().toISOString(); saveSettings(); vSettings();
   };
+  refreshPushUI();
   $("#addbrand").onclick = () => { const id = "b" + uid(); settings.brands.push({ id, name: "New brand", prefix: "NB", color: "#444444", tagline: "", site: "", upi: "", gstin: "", from: { ...RETURN }, products: [] }); settings.updatedAt = new Date().toISOString(); saveSettings(); vSettings(); };
   $("#sauto").onchange = e => { settings.autoForm = e.target.checked; settings.updatedAt = new Date().toISOString(); saveSettings(); toast(e.target.checked ? "Form orders will be added automatically" : "Form orders will wait on Today for you to tap Create order"); };
   $("#srefill").onchange = () => { settings.refillDays = Math.max(7, Number($("#srefill").value) || 30); settings.updatedAt = new Date().toISOString(); saveSettings(); toast("Saved"); };
@@ -1188,7 +1192,64 @@ function autoConnect() {
   if (device.sheetUrl || device.noAuto || !/^https?:$/.test(location.protocol) || /claude|usercontent|localhost|127\.0\.0\.1/.test(location.hostname)) return;
   device.sheetUrl = location.origin + "/api/sync"; device.sheetKey = "login"; device.auto = true; saveDevice();
 }
+/* ------------------------------------------------------------------ phone alerts (new orders + 6 pm summary) */
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+const isInstalled = () => !!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
+const pushOK = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+async function pushState() {
+  if (!pushOK()) return isIOS && !isInstalled() ? "install" : "unsupported";
+  if (Notification.permission === "denied") return "denied";
+  try { const reg = await navigator.serviceWorker.getRegistration("/"); const sub = reg && await reg.pushManager.getSubscription(); return sub ? "on" : "off"; } catch (e) { return "off"; }
+}
+const b64ToBytes = s => { const b = atob((s + "===".slice((s.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+async function pushApi(body) { const r = await fetch("/api/push", { method: body ? "POST" : "GET", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined }); return r.json(); }
+async function enablePush() {
+  try {
+    const perm = await Notification.requestPermission(); // must run straight from the tap
+    if (perm !== "granted") { toast(perm === "denied" ? "Alerts are blocked. Turn them on in iPhone Settings → Notifications → Order Desk." : "Alerts not turned on"); return refreshPushUI(); }
+    const reg = await navigator.serviceWorker.register("/sw.js"); await navigator.serviceWorker.ready;
+    const k = await pushApi(); if (!k.ok) throw new Error(k.error || "no key");
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(k.key) });
+    const label = (isIOS ? "iPhone" : /Android/.test(navigator.userAgent) ? "Android" : "Computer") + " · " + new Date().toLocaleDateString("en-IN");
+    const s2 = await pushApi({ action: "subscribe", sub: sub.toJSON(), label }); if (!s2.ok) throw new Error(s2.error);
+    toast("🔔 Alerts are on for this phone"); pushApi({ action: "test" }).catch(() => {});
+  } catch (e) { toast("Couldn't turn on alerts: " + (e && e.message || "please try again")); }
+  refreshPushUI();
+}
+async function disablePush() {
+  try { const reg = await navigator.serviceWorker.getRegistration("/"); const sub = reg && await reg.pushManager.getSubscription(); if (sub) { await pushApi({ action: "unsubscribe", endpoint: sub.endpoint }); await sub.unsubscribe(); } toast("Alerts turned off on this phone"); } catch (e) { toast("Couldn't turn off alerts"); }
+  refreshPushUI();
+}
+const PUSH_TEXT = {
+  install: "To get alerts on iPhone, open Order Desk from its icon on your Home Screen (not from Safari), then turn alerts on there.",
+  unsupported: "This browser can't show alerts. On iPhone, use the Order Desk app on your Home Screen.",
+  denied: "Alerts are blocked for this app. Turn them on in iPhone Settings → Notifications → Order Desk, then come back.",
+};
+async function refreshPushUI() {
+  const st = await pushState();
+  const ban = $("#pushbanner");
+  if (ban) { let hide = false; try { hide = localStorage.getItem("od1.pushHide") === "1"; } catch (e) {}
+    ban.innerHTML = (st === "off" || st === "install") && !hide ? `<section class="card pushban"><span class="pb-ic" aria-hidden="true">🔔</span><div><b>Get a pop-up for every new order</b><p>${st === "install" ? esc(PUSH_TEXT.install) : "Plus a summary after the 6 pm pickup, with any orders not dispatched."}</p></div>
+      <div class="pb-act">${st === "off" ? `<button class="btn hi sm" type="button" data-push="on">Turn on alerts</button>` : ""}<button class="btn ghost sm" type="button" data-push="hide">Not now</button></div></section>` : ""; }
+  const card = $("#pushcard");
+  if (card) card.innerHTML = `<h2>Phone alerts</h2>
+    <p class="hint">A pop-up for every new order from the form, and a summary after the 6 pm pickup (orders today, dispatched, and who is still pending).</p>
+    ${st === "on" ? `<p><span class="tag t-del">On for this phone</span></p><div class="actions"><button class="btn sm" type="button" data-push="test">Send a test alert</button><button class="btn sm" type="button" data-push="summary">Send today's summary now</button><button class="btn sm ghost" type="button" data-push="off">Turn off on this phone</button></div>`
+    : st === "off" ? `<div class="actions"><button class="btn hi" type="button" data-push="on">🔔 Turn on alerts on this phone</button></div>`
+    : `<p class="hint"><b>${esc(PUSH_TEXT[st])}</b></p>`}
+    <p class="hint">Each phone turns alerts on once. Staff phones can do the same after signing in.</p>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-push]"); if (!b) return; const a = b.dataset.push;
+  if (a === "on") enablePush();
+  if (a === "off") disablePush();
+  if (a === "hide") { try { localStorage.setItem("od1.pushHide", "1"); } catch (x) {} refreshPushUI(); }
+  if (a === "test" || a === "summary") { b.disabled = true; pushApi({ action: a }).then(r => toast(r.ok ? (r.sent ? (a === "test" ? "Test alert sent" : "Summary sent") + " to " + r.sent + " phone" + (r.sent > 1 ? "s" : "") : "No phone received it. Turn alerts off and on again.") : "Couldn't send")).catch(() => toast("Couldn't send")).finally(() => { b.disabled = false; }); }
+});
 function start() {
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  if (navigator.clearAppBadge) { navigator.clearAppBadge().catch(() => {}); document.addEventListener("visibilitychange", () => { if (!document.hidden) navigator.clearAppBadge().catch(() => {}); }); }
   autoConnect();
   if (settings.autoForm !== false && inbox.length) autoImport().then(n => { if (n) render(); });
   render(); syncState("", device.sheetUrl ? "Not synced" : "Local only");

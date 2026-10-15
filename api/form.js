@@ -61,6 +61,11 @@ module.exports = async function handler(req, res) {
     const id = "F" + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
     f.id = id; f.receivedAt = new Date().toISOString();
     await redis(["HSET", INBOX, id, JSON.stringify(f)]);
+    // pop-up on your phones: "New order · Priya · 1 x GlutaNex…"
+    try {
+      const items = (f.ref && f.ref.i || []).map(x => x[2] + " x " + x[1]).join(", ") || f.wish || "Products not chosen";
+      await require("./_push").notifyQuick({ title: "🛍️ New order" + (f.ref && f.ref.bn ? " · " + f.ref.bn : ""), body: `${f.name} · ${f.city || f.pin}\n${items}`, url: "/#dashboard", tag: "order-" + id });
+    } catch (e) { /* an alert problem never blocks the customer's order */ }
     return send(res, 200, { ok: true, id });
   } catch (e) {
     return send(res, 500, { ok: false, error: "Something went wrong. Please send your address on WhatsApp instead." });

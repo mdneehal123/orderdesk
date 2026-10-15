@@ -1,4 +1,4 @@
-name: Copy Mirc Glow photos from WordPress
+name: Find free skincare photos (Unsplash)
 on:
   push:
     branches: [mg-photos]
@@ -9,19 +9,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download photos
+      - name: Search Unsplash and save free candidates
         run: |
-          ok=0; bad=0
-          while read -r u; do
-            [ -z "$u" ] && continue
-            if curl -fsSL --retry 3 -A "Mozilla/5.0 (compatible; MircGlowMigration)" "https://mircglow.com$u" -o "photos$u" --create-dirs; then ok=$((ok+1)); else echo "FAILED $u"; bad=$((bad+1)); fi
-          done < list.txt
-          echo "downloaded $ok, failed $bad"
-          ls -la photos/wp-content/uploads/2026/09 | head -40
-      - name: Save photos to this branch
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse, os
+          qs = ["indian woman skincare","indian woman face cream","indian woman washing face","indian woman applying cream","woman applying face cream brown skin",
+                "woman applying sunscreen face","woman night skincare routine","woman removing makeup cotton pad","woman sleeping peacefully","indian woman glowing skin portrait",
+                "south asian woman skincare","woman moisturizer face mirror"]
+          H = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+          seen, keep = set(), []
+          os.makedirs("cand", exist_ok=True)
+          for q in qs:
+              for page in (1, 2):
+                  u = "https://unsplash.com/napi/search/photos?" + urllib.parse.urlencode({"query": q, "per_page": 30, "page": page})
+                  try: d = json.load(urllib.request.urlopen(urllib.request.Request(u, headers=H), timeout=30))
+                  except Exception as e: print("search failed", q, e); continue
+                  for r in d.get("results", []):
+                      if r["id"] in seen or r.get("premium") or r.get("plus"): continue
+                      seen.add(r["id"])
+                      keep.append({"id": r["id"], "q": q, "w": r["width"], "h": r["height"], "alt": r.get("alt_description"), "desc": r.get("description"),
+                                   "by": r["user"]["name"], "page": r["links"]["html"], "raw": r["urls"]["raw"]})
+          print("free candidates:", len(keep))
+          for i, k in enumerate(keep):
+              try:
+                  urllib.request.urlretrieve(k["raw"] + "&w=360&q=60&fm=jpg", f"cand/{i:03d}_{k['id']}.jpg")
+              except Exception as e: print("thumb failed", k["id"], e)
+          json.dump(keep, open("cand/index.json", "w"), indent=1)
+          PY
+      - name: Save
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add photos
-          git commit -m "Mirc Glow photos copied from WordPress" || echo "nothing new"
-          git push
+          git add cand && git commit -m "Free photo candidates" && git push

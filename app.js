@@ -770,7 +770,7 @@ function saveForm(andPrint) {
 }
 
 /* ---- orders list ---- */
-const FILTERS = [["open", "To ship"], ["unpaid", "Payment not received"], ["shipped", "Dispatched"], ["cancelled", "Cancelled"], ["all", "All"]];
+const FILTERS = [["open", "To ship"], ["unpaid", "Payment not received"], ["cancelled", "Cancelled"], ["all", "All"]];
 function passFilter(o, f) {
   if (f === "open") return ["new", "paid", "packed"].includes(o.status);
   if (f === "unpaid") return !o.paid && o.status !== "cancelled";
@@ -858,7 +858,7 @@ function listClick(e) {
   if (a === "label" || a === "slip") printDocs([o], a);
   if (a === "track") { ui.dispatch = id; ui.open.add(id); vOrders(); const f = document.querySelector(`[data-dform="${CSS.escape(id)}"] [data-d="awb"]`); if (f) f.focus(); return; }
   if (a === "dcancel") { ui.dispatch = null; vOrders(); return; }
-  if (a === "dsave") { if (saveDispatch(id, x.closest("[data-dform]"))) { ui.dispatch = null; ui.justShipped = id; toast("Tracking saved for " + id); vOrders(); } return; }
+  if (a === "dsave") { const wasNew = TOSHIP.includes(o.status); if (saveDispatch(id, x.closest("[data-dform]"))) { ui.dispatch = null; if (wasNew) { ui.dispHi = id; ui.dispAll = false; ui.dq = ""; toast(o.name.split(" ")[0] + " moved to Dispatch ✓"); location.hash = "#dispatch"; } else { toast("Tracking updated for " + id); vOrders(); } } return; } // newly dispatched orders leave Orders and go to Dispatch
   if (a === "step") { const s2 = x.dataset.s; if (o.status !== s2) { patch(id, { status: s2 }); toast(o.name.split(" ")[0] + ": " + stName(s2)); vOrders(); } return; }
   if (a === "copyawb") { navigator.clipboard && navigator.clipboard.writeText(o.awb).then(() => toast("AWB copied"), () => toast(o.awb)); return; }
   if (a === "edit") { ui.editing = id; ui.formBrand = o.brand; location.hash = "#new"; }
@@ -902,7 +902,7 @@ function vDispatch() {
   : `<div class="empty"><h2>Nothing waiting to dispatch</h2><p>Orders that are new, paid or packed appear here.</p></div>`}
   ${allDone.length ? `<div class="card stack" style="margin-top:16px"><div class="head" style="margin:0"><div><h2>Dispatched · ${dq ? "search" : ui.dispAll ? "all" : "last 7 days"} <span class="tag t-transit">${done.length}</span></h2><p class="hint" style="margin:0">Orders move here automatically as soon as tracking is added, and stay here.</p></div>
     <input type="search" id="dq" placeholder="Search name, phone or AWB" value="${esc(ui.dq || "")}" aria-label="Search dispatched" style="max-width:260px"></div>
-    ${!done.length ? `<p class="hint">Nothing matches.</p>` : ""}<div class="tbl"><table><tbody>${done.map(o => `<tr><td class="mono">${esc(o.id)}<div class="hint">${o.shippedAt ? dmy(o.shippedAt.slice(0, 10)) : ""}</div></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td>${esc(o.courier || "")} <span class="mono">${esc(o.awb)}</span></td><td>${SEND_BTN(o, "sm hi")}${o.trackingSentAt ? ` <span class="hint">✓ sent</span>` : ""}</td></tr>`).join("")}</tbody></table></div><div class="actions">${done.some(o => !o.trackingSentAt) ? waAnchor(done.find(o => !o.trackingSentAt), "btn primary", `${WA_ICON} Send to next: ${esc(done.find(o => !o.trackingSentAt).name)} (${done.filter(o => !o.trackingSentAt).length} left)`, "track") : `<span class="hint">✓ Tracking sent to everyone in this list.</span>`}${!dq && older ? `<button class="btn sm" id="dall" type="button">${ui.dispAll ? "Show last 7 days only" : `Show all dispatched (${older} older)`}</button>` : ""}<a class="btn sm" href="#orders">See all orders</a></div></div>` : ""}`;
+    ${!done.length ? `<p class="hint">Nothing matches.</p>` : ""}<div class="tbl"><table><tbody>${done.map(o => `<tr${ui.dispHi === o.id ? ' class="hi-row"' : ""}><td class="mono">${esc(o.id)}<div class="hint">${ui.dispHi === o.id ? "<b>Just now</b>" : o.shippedAt ? dmy(o.shippedAt.slice(0, 10)) : ""}</div></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td>${esc(o.courier || "")} <span class="mono">${esc(o.awb)}</span></td><td>${SEND_BTN(o, "sm hi")}${o.trackingSentAt ? ` <span class="hint">✓ sent</span>` : ""}</td></tr>`).join("")}</tbody></table></div><div class="actions">${done.some(o => !o.trackingSentAt) ? waAnchor(done.find(o => !o.trackingSentAt), "btn primary", `${WA_ICON} Send to next: ${esc(done.find(o => !o.trackingSentAt).name)} (${done.filter(o => !o.trackingSentAt).length} left)`, "track") : `<span class="hint">✓ Tracking sent to everyone in this list.</span>`}${!dq && older ? `<button class="btn sm" id="dall" type="button">${ui.dispAll ? "Show last 7 days only" : `Show all dispatched (${older} older)`}</button>` : ""}<a class="btn sm" href="#orders">See all orders</a></div></div>` : ""}`;
   const rows = [...document.querySelectorAll(".dt tbody tr")];
   rows.forEach((tr, i) => { const w = tr.querySelector("[data-w]"); w.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); const n = rows[i + 1]; if (n) n.querySelector("[data-w]").focus(); else $("#dsaveall").focus(); } }; });
   if ($("#allcour")) $("#allcour").onchange = e => rows.forEach(tr => { const s = tr.querySelector("[data-c]"); if (!s.value) s.value = e.target.value; });

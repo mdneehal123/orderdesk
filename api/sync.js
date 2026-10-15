@@ -30,6 +30,15 @@ async function readBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
 }
 
+// Allowed if the password is sent as "key", OR the browser is already logged in to the site
+// (the login box sends the same password with every request as Basic auth).
+function loginPass(req) {
+  const h = (req.headers && (req.headers.authorization || req.headers.Authorization)) || "";
+  if (!h.startsWith("Basic ")) return "";
+  try { const d = Buffer.from(h.slice(6).trim(), "base64").toString("utf8"); return d.slice(d.indexOf(":") + 1).trim(); } catch (e) { return ""; }
+}
+const allowed = (req, key) => String(key || "").trim() === PASSWORD || loginPass(req) === PASSWORD;
+
 module.exports = async function handler(req, res) {
   try {
     if (!URL_ || !TOKEN) return send(res, 500, { ok: false, error: "Database not connected. In Vercel open Storage, create an Upstash Redis database and connect it to this project, then redeploy." });
@@ -37,7 +46,7 @@ module.exports = async function handler(req, res) {
 
     if (req.method === "GET") {
       const key = (req.query && req.query.key) || new URL(req.url, "http://x").searchParams.get("key");
-      if (key !== PASSWORD) return send(res, 401, { ok: false, error: "wrong key" });
+      if (!allowed(req, key)) return send(res, 401, { ok: false, error: "wrong key" });
       const vals = (await redis(["HVALS", ORDERS])) || [];
       const orders = vals.map(v => { try { return JSON.parse(v); } catch (e) { return null; } }).filter(Boolean);
       const s = await redis(["GET", SETTINGS]);
@@ -47,7 +56,7 @@ module.exports = async function handler(req, res) {
 
     if (req.method === "POST") {
       const body = await readBody(req);
-      if (body.key !== PASSWORD) return send(res, 401, { ok: false, error: "wrong key" });
+      if (!allowed(req, body.key)) return send(res, 401, { ok: false, error: "wrong key" });
       if (Array.isArray(body.orders) && body.orders.length) {
         const cmd = ["HSET", ORDERS];
         body.orders.slice(0, 200).forEach(o => { if (o && o.id) cmd.push(String(o.id), JSON.stringify(o)); });

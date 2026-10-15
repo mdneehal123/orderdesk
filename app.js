@@ -115,7 +115,7 @@ async function syncNow(quiet) {
   try {
     const r = await fetch(device.sheetUrl + (device.sheetUrl.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(device.sheetKey));
     const j = await r.json();
-    if (!j.ok) { if (j.error === "wrong key") { syncState("err", "Wrong password"); if (!quiet) toast("Wrong password. Check ORDER_DESK_PASSWORD in Vercel."); syncing = false; return; } throw new Error(j.error || "refused"); }
+    if (!j.ok) { if (j.error === "wrong key") { if (device.auto) { device.sheetUrl = ""; device.sheetKey = ""; device.auto = false; device.noAuto = true; saveDevice(); syncState("", "Local only"); syncing = false; return; } syncState("err", "Wrong password"); if (!quiet) toast("Wrong password. Check ORDER_DESK_PASSWORD in Vercel."); syncing = false; return; } throw new Error(j.error || "refused"); }
     let changed = false;
     (j.orders || []).forEach(o => { if (o) o.status = OLDSTATUS(o.status); const mine = orders[o.id]; if (!mine || (o.updatedAt || "") > (mine.updatedAt || "")) { orders[o.id] = o; changed = true; device.dirty = device.dirty.filter(x => x !== o.id); } });
     if (j.settings && (j.settings.updatedAt || "") > (settings.updatedAt || "")) { settings = j.settings; saveSettings(); changed = true; }
@@ -1045,8 +1045,8 @@ function vSettings() {
   document.querySelectorAll("[data-tp]").forEach(i => i.onchange = () => { settings.trackPages = { ...(settings.trackPages || {}), [i.dataset.tp]: i.value.trim() || TRACK_PAGES[i.dataset.tp] }; settings.updatedAt = new Date().toISOString(); saveSettings(); toast(i.dataset.tp + " tracking page saved"); });
   $("#snote").onchange = () => { settings.nextNote = $("#snote").value.trim(); settings.updatedAt = new Date().toISOString(); saveSettings(); toast("Saved"); };
   $("#sslip").onchange = e => { settings.printSlip = e.target.checked; settings.updatedAt = new Date().toISOString(); saveSettings(); };
-  $("#oconn").onclick = () => { const pw = $("#opw").value.trim(); if (!pw) { toast("Enter the password."); return; } device.sheetUrl = location.origin + "/api/sync"; device.sheetKey = pw; saveDevice(); syncNow(false).then(() => vSettings()); };
-  if ($("#odisc")) $("#odisc").onclick = () => { device.sheetUrl = ""; device.sheetKey = ""; saveDevice(); syncState("", "Local only"); vSettings(); };
+  $("#oconn").onclick = () => { const pw = $("#opw").value.trim(); if (!pw) { toast("Enter the password."); return; } device.sheetUrl = location.origin + "/api/sync"; device.sheetKey = pw; device.auto = false; device.noAuto = false; saveDevice(); syncNow(false).then(() => vSettings()); };
+  if ($("#odisc")) $("#odisc").onclick = () => { device.noAuto = true; device.auto = false; device.sheetUrl = ""; device.sheetKey = ""; saveDevice(); syncState("", "Local only"); vSettings(); };
   $("#ssync").onclick = () => { device.sheetUrl = $("#surl").value.trim(); device.sheetKey = $("#skey").value.trim(); saveDevice(); syncNow(false); };
   $("#setpin").onclick = async () => { const p = $("#spin").value; if (!/^\d{4,8}$/.test(p)) { toast("PIN must be 4–8 digits."); return; } device.pinHash = await sha("od:" + p); saveDevice(); toast("PIN set"); vSettings(); };
   if ($("#rmpin")) $("#rmpin").onclick = () => { device.pinHash = ""; saveDevice(); toast("PIN removed"); vSettings(); };
@@ -1081,7 +1081,14 @@ async function boot() {
     $("#lockform").onsubmit = async e => { e.preventDefault(); if (await sha("od:" + $("#lockpin").value) === device.pinHash) { $("#lock").hidden = true; $("#app").hidden = false; start(); } else { $("#lockerr").hidden = false; $("#lockpin").value = ""; } };
   } else start();
 }
+// Logged in on the real site but this browser isn't connected yet: connect automatically using the login,
+// so every device shows all saved orders without typing the password again.
+function autoConnect() {
+  if (device.sheetUrl || device.noAuto || !/^https?:$/.test(location.protocol) || /claude|usercontent|localhost|127\.0\.0\.1/.test(location.hostname)) return;
+  device.sheetUrl = location.origin + "/api/sync"; device.sheetKey = "login"; device.auto = true; saveDevice();
+}
 function start() {
+  autoConnect();
   if (settings.autoForm !== false && inbox.length) autoImport().then(n => { if (n) render(); });
   render(); syncState("", device.sheetUrl ? "Not synced" : "Local only");
   if (device.sheetUrl) syncNow(true);

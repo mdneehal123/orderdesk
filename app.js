@@ -351,13 +351,13 @@ function markSent(o) { if (orders[o.id] && !orders[o.id].trackingSentAt) patch(o
 async function shareLabel(o) {
   const blob = await labelBlob(o); const file = new File([blob], `${o.id}-label.png`, { type: "image/png" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: "Label " + o.id }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.share({ files: [file], title: "Label " + o.id }); markLabelsDone([o]); return; } catch (e) { if (e && e.name === "AbortError") return; }
   }
   downloadLabelPNG(o); toast("Sharing isn't available on this device, so the label was downloaded instead.");
 }
 document.addEventListener("click", e => { const x = e.target.closest("[data-sharelbl]"); if (x) { const o = orders[x.dataset.sharelbl]; if (o) shareLabel(o); } });
 const LABEL_BTNS = o => `<button type="button" class="btn sm" data-png="${esc(o.id)}">⬇ Download</button><button type="button" class="btn sm" data-sharelbl="${esc(o.id)}">↗ Share</button>`;
-async function downloadLabelPNG(o) { const blob = await labelBlob(o); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${o.id}-label.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }
+async function downloadLabelPNG(o) { const blob = await labelBlob(o); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${o.id}-label.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); markLabelsDone([o]); }
 /* Many labels at once → ONE PDF, one 4 × 6 inch label per page (10 orders = 10 pages).
    Built right here in the browser, no extra library needed. */
 async function labelsPDF(list) {
@@ -386,16 +386,18 @@ async function labelsPDF(list) {
   return new Blob(parts, { type: "application/pdf" });
 }
 const pdfName = list => `labels-${today()}-${list.length}.pdf`;
+// A label counts as done once it is printed, downloaded or shared, so bulk PDFs only contain NEW labels.
+function markLabelsDone(list) { const now = new Date().toISOString(); list.forEach(o => { if (orders[o.id] && !orders[o.id].printedAt) patch(o.id, { printedAt: now }); }); }
 async function downloadLabels(list) {
   if (!list.length) return; toast("Making PDF of " + list.length + " label" + (list.length > 1 ? "s" : "") + "…");
   const blob = await labelsPDF(list); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = pdfName(list); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  toast(`Downloaded 1 PDF · ${list.length} page${list.length > 1 ? "s" : ""}`);
+  markLabelsDone(list); toast(`Downloaded 1 PDF · ${list.length} page${list.length > 1 ? "s" : ""}`); if (route() === "dashboard") vDashboard();
 }
 async function shareLabels(list) {
   if (!list.length) return; toast("Making PDF of " + list.length + " label" + (list.length > 1 ? "s" : "") + "…");
   const file = new File([await labelsPDF(list)], pdfName(list), { type: "application/pdf" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: list.length + " labels" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.share({ files: [file], title: list.length + " labels" }); markLabelsDone(list); if (route() === "dashboard") vDashboard(); return; } catch (e) { if (e && e.name === "AbortError") return; }
   }
   await downloadLabels(list); toast("Sharing isn't available here, so the PDF was downloaded instead.");
 }
@@ -612,10 +614,10 @@ function vDashboard() {
   const refills = refillDue();
   $("#view").innerHTML = `
   <div class="head"><div><h1>Today · ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</h1><p class="sub">${esc(brandName)}</p></div>
-    <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${toShip.length ? `<button class="btn" id="dlall" type="button" title="Download the label pictures of all ${toShip.length} orders to ship">⬇ PDF · ${toShip.length} label${toShip.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share the label pictures of all ${toShip.length} orders to ship">↗ Share PDF</button>` : ""}</div></div>
+    <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${unprinted.length ? `<button class="btn" id="dlall" type="button" title="One PDF with only the ${unprinted.length} new label(s) not yet printed or downloaded">⬇ PDF · ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share one PDF with the new labels">↗ Share PDF</button>` : ""}</div></div>
   <div class="grid g4">
     <div class="kpi"><span>Orders today</span><b>${tod.length}</b><small>${tod.reduce((a, o) => a + pcs(o), 0)} pcs</small></div>
-    <div class="kpi ${toShip.length ? "hot" : ""}"><span>To pack &amp; ship</span><b>${toShip.length}</b><small>${unprinted.length} labels not printed</small></div>
+    <div class="kpi ${toShip.length ? "hot" : ""}"><span>To pack &amp; ship</span><b>${toShip.length}</b><small>${unprinted.length} new label${unprinted.length === 1 ? "" : "s"} to print</small></div>
     <div class="kpi"><span>Waiting for UPI</span><b>${unpaid.length}</b><small>payment not received</small></div>
     <div class="kpi"><span>Dispatched</span><b>${onRoad.length}</b><small>in the last 7 days</small></div>
   </div>
@@ -639,8 +641,8 @@ function vDashboard() {
   </section>
   ${device.sheetUrl ? "" : `<div class="card" style="margin-top:14px;border-color:var(--hi);border-width:2px"><h2>Turn on online storage</h2><p class="hint" style="margin:6px 0 10px">Right now orders are saved only in this browser. Connect online storage so they're safe and shared between your phone and laptop.</p><a class="btn" href="#settings">Connect now</a></div>`}`;
   const pa = $("#printall"); if (pa) pa.onclick = () => printDocs(unprinted, "label");
-  const dla = $("#dlall"); if (dla) dla.onclick = () => downloadLabels(toShip);
-  const sha2 = $("#shareall"); if (sha2) sha2.onclick = () => shareLabels(toShip);
+  const dla = $("#dlall"); if (dla) dla.onclick = () => downloadLabels(unprinted);
+  const sha2 = $("#shareall"); if (sha2) sha2.onclick = () => shareLabels(unprinted);
   $("#formcopy").onclick = () => copyText(ORDER_LINK(), "Order form link copied ✓");
 }
 function ago(iso) {

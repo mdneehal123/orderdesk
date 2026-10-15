@@ -241,11 +241,11 @@ function slipHTML(o) {
   <div class="thanks"><b>Thank you, ${esc((o.name || "").split(" ")[0])}!</b><br>Patch test before first use. Questions? WhatsApp ${esc(fmtPhone(b.from.phone))}.${settings.nextNote ? "<br>" + esc(settings.nextNote) : ""}</div>
 </div>`;
 }
-function printDocs(list, kind) {
+function printDocs(list, kind, bulk) { // only bulk printing takes labels out of the "new labels" list
   if (!list.length) return;
   const html = list.map(o => (kind !== "slip" ? labelHTML(o) : "") + (kind !== "label" ? slipHTML(o) : "")).join("");
   $("#print").innerHTML = html;
-  setTimeout(() => { window.print(); if (kind !== "slip") list.forEach(o => { if (!o.printedAt && orders[o.id]) patch(o.id, { printedAt: new Date().toISOString() }); }); }, 150);
+  setTimeout(() => { window.print(); if (bulk && kind !== "slip") list.forEach(o => { if (!o.printedAt && orders[o.id]) patch(o.id, { printedAt: new Date().toISOString() }); }); }, 150);
 }
 
 /* ------------------------------------------------------------------ label as image (for WhatsApp) */
@@ -357,7 +357,7 @@ async function shareLabel(o) {
 }
 document.addEventListener("click", e => { const x = e.target.closest("[data-sharelbl]"); if (x) { const o = orders[x.dataset.sharelbl]; if (o) shareLabel(o); } });
 const LABEL_BTNS = o => `<button type="button" class="btn sm" data-png="${esc(o.id)}">⬇ Download</button><button type="button" class="btn sm" data-sharelbl="${esc(o.id)}">↗ Share</button>`;
-async function downloadLabelPNG(o) { const blob = await labelBlob(o); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${o.id}-label.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); markLabelsDone([o]); }
+async function downloadLabelPNG(o) { const blob = await labelBlob(o); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${o.id}-label.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); }
 /* Many labels at once → ONE PDF, one 4 × 6 inch label per page (10 orders = 10 pages).
    Built right here in the browser, no extra library needed. */
 async function labelsPDF(list) {
@@ -670,7 +670,7 @@ function vDashboard() {
     ${refillCard(refills)}
   </section>
   ${device.sheetUrl ? "" : `<div class="card" style="margin-top:14px;border-color:var(--hi);border-width:2px"><h2>Turn on online storage</h2><p class="hint" style="margin:6px 0 10px">Right now orders are saved only in this browser. Connect online storage so they're safe and shared between your phone and laptop.</p><a class="btn" href="#settings">Connect now</a></div>`}`;
-  const pa = $("#printall"); if (pa) pa.onclick = () => printDocs(unprinted, "label");
+  const pa = $("#printall"); if (pa) pa.onclick = () => printDocs(unprinted, "label", true);
   const dla = $("#dlall"); if (dla) dla.onclick = () => downloadLabels(unprinted);
   const sha2 = $("#shareall"); if (sha2) sha2.onclick = () => shareLabels(unprinted);
   $("#formcopy").onclick = () => copyText(ORDER_LINK(), "Order form link copied ✓");
@@ -873,7 +873,7 @@ function vOrders() {
   $("#list").addEventListener("toggle", e => { if (e.target.tagName !== "DETAILS") return; const id = e.target.closest(".ord").dataset.id; if (e.target.open) { ui.open.add(id); const pv = e.target.querySelector(".preview"); if (pv && !pv.innerHTML.trim()) pv.innerHTML = labelHTML(orders[id]); } else ui.open.delete(id); }, true);
   $("#selbar").onclick = e => { const x = e.target.closest("[data-b]"); if (!x) return; const sel = [...ui.sel].map(i => orders[i]).filter(Boolean); const a = x.dataset.b;
     if (a === "none") { ui.sel.clear(); vOrders(); return; }
-    if (["label", "slip", "both"].includes(a)) { printDocs(sel, a); return; }
+    if (["label", "slip", "both"].includes(a)) { printDocs(sel, a, true); return; }
     if (a === "dl") { downloadLabels(sel); return; }
     if (a === "share") { shareLabels(sel); return; }
     if (a === "shipped" && sel.some(o => !o.awb)) toast("Tip: add AWB numbers so customers get tracking.");

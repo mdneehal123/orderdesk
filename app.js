@@ -584,9 +584,18 @@ document.addEventListener("change", e => { const g = e.target.closest("[data-cou
 /* ------------------------------------------------------------------ router */
 const routes = { dashboard: vDashboard, new: vNew, orders: vOrders, dispatch: vDispatch, scan: vScan, customers: vCustomers, reports: vReports, settings: vSettings };
 function route() { return (location.hash || "#dashboard").slice(1).split("?")[0]; }
+/* iPhone app: "More" sheet and sign out */
+function closeSheet() { const sh = $("#moreSheet"), bg = $("#sheetBg"), mb = $("#moreBtn"); if (sh) sh.hidden = true; if (bg) bg.hidden = true; if (mb) mb.setAttribute("aria-expanded", "false"); }
+document.addEventListener("click", e => {
+  if (e.target.closest("#moreBtn")) { const sh = $("#moreSheet"); const open = sh.hidden; sh.hidden = !open; $("#sheetBg").hidden = !open; $("#moreBtn").setAttribute("aria-expanded", String(open)); return; }
+  if (e.target.closest("#sheetBg") || e.target.closest("#moreSheet a")) closeSheet();
+  if (e.target.closest("#logoutBtn")) { if (!confirm("Sign out of Order Desk on this device?")) return; fetch("/api/logout", { method: "POST", credentials: "same-origin" }).finally(() => { location.replace("/login/"); }); }
+});
 function render() {
   const r = routes[route()] ? route() : "dashboard";
-  document.querySelectorAll("#nav a").forEach(a => { if (a.dataset.r === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  document.querySelectorAll("#nav a, #tabbar a, #moreSheet a").forEach(a => { if (a.dataset.r === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  const mb = $("#moreBtn"); if (mb) { if (["scan", "customers", "reports", "settings"].includes(r)) mb.setAttribute("aria-current", "page"); else mb.removeAttribute("aria-current"); }
+  closeSheet();
   renderBrandPick();
   if (r !== "scan") stopCam();
   routes[r]();

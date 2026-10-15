@@ -37,7 +37,14 @@ function loginPass(req) {
   if (!h.startsWith("Basic ")) return "";
   try { const d = Buffer.from(h.slice(6).trim(), "base64").toString("utf8"); return d.slice(d.indexOf(":") + 1).trim(); } catch (e) { return ""; }
 }
-const allowed = (req, key) => String(key || "").trim() === PASSWORD || loginPass(req) === PASSWORD;
+// Signed in through the app's login screen (secure 180-day cookie).
+function sessionOk(req) {
+  const m = String((req.headers && req.headers.cookie) || "").match(/(?:^|;\s*)od_session=([^;]+)/); if (!m) return false;
+  const [exp, sig] = decodeURIComponent(m[1]).split("."); if (!exp || !sig || !(Number(exp) > Date.now())) return false;
+  const want = require("crypto").createHmac("sha256", PASSWORD).update("od-session:" + exp).digest("hex");
+  return want.length === sig.length && require("crypto").timingSafeEqual(Buffer.from(want), Buffer.from(sig));
+}
+const allowed = (req, key) => String(key || "").trim() === PASSWORD || loginPass(req) === PASSWORD || sessionOk(req);
 
 module.exports = async function handler(req, res) {
   try {

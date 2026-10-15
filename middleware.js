@@ -1,29 +1,52 @@
 // Order Desk — makes the WHOLE site private.
-// Every page and the order data ask for a login first (except the customer address form at /form).
-// Username: anything (e.g. "admin"). Password: ORDER_DESK_PASSWORD from Vercel → Settings → Environment Variables.
+// You sign in once on the /login screen; the app remembers you for 180 days (secure cookie).
+// Public (no login): the customer order form (/form), its two APIs, the login screen and the app icons.
+// Password: ORDER_DESK_PASSWORD from Vercel → Settings → Environment Variables.
 export const config = { matcher: "/:path*" };
 
-export default function middleware(request) {
-  // The customer address form is the ONLY public part.
-  const path = new URL(request.url).pathname;
-  if (path === "/form" || path.startsWith("/form/") || path === "/api/form" || path === "/api/catalog") return;
+const PUBLIC = [/^\/form(\/.*)?$/, /^\/api\/form$/, /^\/api\/catalog$/, /^\/login(\/.*)?$/, /^\/api\/login$/,
+  /^\/manifest\.webmanifest$/, /^\/icons\/.*$/, /^\/robots\.txt$/, /^\/favicon\.ico$/];
+
+async function hmacHex(key, msg) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(msg));
+  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+async function validSession(token, password) {
+  const [exp, sig] = String(token || "").split(".");
+  if (!exp || !sig || !(Number(exp) > Date.now())) return false;
+  const want = await hmacHex(password, "od-session:" + exp);
+  if (want.length !== sig.length) return false;
+  let diff = 0; for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ sig.charCodeAt(i);
+  return diff === 0;
+}
+function cookie(request, name) {
+  const m = (request.headers.get("cookie") || "").match(new RegExp("(?:^|;\\s*)" + name + "=([^;]+)"));
+  return m ? decodeURIComponent(m[1]) : "";
+}
+
+export default async function middleware(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  if (PUBLIC.some(r => r.test(path))) return;
 
   const password = (process.env.ORDER_DESK_PASSWORD || "").trim();
+  if (!password) return new Response("No password found. Add ORDER_DESK_PASSWORD in Vercel (Settings → Environment Variables), then Redeploy.", { status: 503 });
+
+  if (await validSession(cookie(request, "od_session"), password)) return; // signed in
+
+  // Older browser logins (Basic auth) still work, so nobody is locked out during the switch.
   const auth = request.headers.get("authorization") || "";
-  if (password && auth.startsWith("Basic ")) {
+  if (auth.startsWith("Basic ")) {
     try {
       const bin = atob(auth.slice(6).trim());
-      const decoded = new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); // works with any characters
-      const given = decoded.slice(decoded.indexOf(":") + 1).trim();
-      if (given === password) return; // allowed: continue to the site
-    } catch (e) { /* fall through to the login prompt */ }
+      const decoded = new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+      if (decoded.slice(decoded.indexOf(":") + 1).trim() === password) return;
+    } catch (e) { /* ignore */ }
   }
-  return new Response(password ? "Login required. Username: anything. Password: your ORDER_DESK_PASSWORD." : "No password found. Add ORDER_DESK_PASSWORD in Vercel (Settings → Environment Variables), then Redeploy.", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="Order Desk (private)", charset="UTF-8"',
-      "Cache-Control": "no-store",
-      "X-Robots-Tag": "noindex, nofollow",
-    },
-  });
+
+  const headers = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" };
+  if (path.startsWith("/api/")) return new Response(JSON.stringify({ ok: false, error: "login required" }), { status: 401, headers: { ...headers, "Content-Type": "application/json" } });
+  const next = path + url.search;
+  return new Response(null, { status: 302, headers: { ...headers, Location: "/login/?next=" + encodeURIComponent(next) } });
 }

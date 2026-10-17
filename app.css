@@ -173,6 +173,24 @@ textarea{resize:vertical}
 .selbar .btn{background:#fff}
 .selbar .btn.hi{background:var(--hi)}
 
+/* after printing labels: tell each customer on WhatsApp that the order is getting ready */
+.ntstack{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(600px,calc(100% - 24px));max-height:calc(100vh - 28px);overflow:auto;display:grid;gap:10px;z-index:55;pointer-events:none}
+.ntbar{pointer-events:auto;max-height:72vh;overflow:auto;background:var(--paper);border:2.5px solid var(--ink);border-radius:16px;box-shadow:0 18px 50px -14px rgba(0,0,0,.55);padding:14px 16px;display:grid;gap:10px}
+.ntstack:has(> .ntbar:not([hidden]) ~ .ntbar:not([hidden])) .ntbar{max-height:38vh} /* two boxes at once: each gets less height */
+a.locked{opacity:.45;cursor:not-allowed} /* a WhatsApp button for a message that is being sent by itself right now */
+.sendnow .hint{color:var(--ink);font-weight:700}
+.nt-head{display:flex;gap:10px;align-items:start;justify-content:space-between}
+.nt-head h2{font-size:1.05rem}
+.nt-list{list-style:none;margin:0;padding:0;display:grid}
+.nt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.nt-row b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nt-row .meta{font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+.nt-row.done{opacity:.6}
+.nt-act{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.nt-row .err{display:block;font-size:.78rem;font-weight:700;color:var(--bad);overflow-wrap:anywhere}
+.nt-row .wait{font-size:.78rem;font-weight:800;color:var(--muted)}
+.nt-info{margin:0;font-weight:800}
+
 .lc{list-style:none;margin:0;padding:0;display:grid}
 .lc li{display:grid;grid-template-columns:auto minmax(0,1fr) 170px 230px auto;gap:14px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
 .lc li:last-child{border-bottom:0}
@@ -330,6 +348,7 @@ tr:last-child td{border-bottom:0}
   .head .actions .btn{flex:1 1 auto}
   .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
   .selbar{bottom:calc(76px + env(safe-area-inset-bottom))}
+  .ntstack{bottom:calc(76px + env(safe-area-inset-bottom));max-height:calc(100vh - 96px - env(safe-area-inset-bottom))} /* WhatsApp boxes sit above the tab bar */
 
   .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:40;
     background:rgba(18,18,20,.92);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);

@@ -107,6 +107,15 @@ async function sha(s) { const b = await crypto.subtle.digest("SHA-256", new Text
 /* ------------------------------------------------------------------ online sync (your site's /api/sync, or a Google Sheet) */
 const online = () => !!device.sheetUrl && /\/api\/sync$/.test(device.sheetUrl);
 let syncing = false;
+// "this customer was already told" never goes backwards: if either copy of an order knows it, both do (an old copy on another phone must not make you send it again)
+const TOLD = [["trackingSentAt", "trackingVia", "trackingMsgId", "trackingSentSig"], ["readySentAt", "readyVia", "readyMsgId", "readySkip"]];
+function keepTold(a, b) { // copies the "told" marks from b into a when a does not have them; true if a changed
+  let fixed = false;
+  if (!a || !b) return false;
+  TOLD.forEach(keys => { if (!a[keys[0]] && b[keys[0]]) { keys.forEach(k => { if (b[k] !== undefined) a[k] = b[k]; }); fixed = true; } });
+  if (fixed) { if (a.trackingSentAt) a.trackingTry = ""; if (a.readySentAt) a.readyTry = ""; }
+  return fixed;
+}
 function syncState(s, t) { $("#syncdot").className = "sd " + (s || ""); $("#synctxt").textContent = t; }
 function markDirty(id) { if (!device.dirty.includes(id)) device.dirty.push(id); saveDevice(); }
 async function syncNow(quiet) {
@@ -117,7 +126,9 @@ async function syncNow(quiet) {
     const j = await r.json();
     if (!j.ok) { if (j.error === "wrong key") { if (device.auto) { device.sheetUrl = ""; device.sheetKey = ""; device.auto = false; device.noAuto = true; saveDevice(); syncState("", "Local only"); syncing = false; return; } syncState("err", "Wrong password"); if (!quiet) toast("Wrong password. Check ORDER_DESK_PASSWORD in Vercel."); syncing = false; return; } throw new Error(j.error || "refused"); }
     let changed = false;
-    (j.orders || []).forEach(o => { if (o) o.status = OLDSTATUS(o.status); const mine = orders[o.id]; if (!mine || (o.updatedAt || "") > (mine.updatedAt || "")) { orders[o.id] = o; changed = true; device.dirty = device.dirty.filter(x => x !== o.id); } });
+    (j.orders || []).forEach(o => { if (o) o.status = OLDSTATUS(o.status); const mine = orders[o.id];
+      if (!mine || (o.updatedAt || "") > (mine.updatedAt || "")) { const fix = mine && keepTold(o, mine); orders[o.id] = o; changed = true; device.dirty = device.dirty.filter(x => x !== o.id); if (fix) markDirty(o.id); }
+      else if (keepTold(mine, o)) { changed = true; markDirty(mine.id); } });
     if (j.settings && (j.settings.updatedAt || "") > (settings.updatedAt || "")) { settings = j.settings; saveSettings(); changed = true; }
     if (Array.isArray(j.inbox)) { const before = inbox.map(x => x.id).join(); inbox = j.inbox.sort((a, b) => (b.receivedAt || "").localeCompare(a.receivedAt || "")); persist(K.inbox, inbox); if (inbox.map(x => x.id).join() !== before) { changed = true; if (settings.autoForm === false && inbox.length > before.split(",").filter(Boolean).length) toast("📬 New address from the customer form"); } }
     if (settings.autoForm !== false && inbox.length) { const n = await autoImport(); if (n) changed = true; }
@@ -245,7 +256,7 @@ function printDocs(list, kind, bulk) { // only bulk printing takes labels out of
   if (!list.length) return;
   const html = list.map(o => (kind !== "slip" ? labelHTML(o) : "") + (kind !== "label" ? slipHTML(o) : "")).join("");
   $("#print").innerHTML = html;
-  setTimeout(() => { window.print(); if (bulk && kind !== "slip") list.forEach(o => { if (!o.printedAt && orders[o.id]) patch(o.id, { printedAt: new Date().toISOString() }); }); }, 150);
+  setTimeout(() => { window.print(); if (bulk && kind !== "slip") { list.forEach(o => { if (!o.printedAt && orders[o.id]) patch(o.id, { printedAt: new Date().toISOString() }); }); if (route() === "dashboard") vDashboard(); offerReady(list.map(o => o.id)); } }, 150);
 }
 
 /* ------------------------------------------------------------------ label as image (for WhatsApp) */
@@ -337,17 +348,27 @@ function waHref(o, kind) {
 function waAnchor(o, cls, inner, kind, extra) {
   const href = waHref(o, kind);
   if (!href) return `<button type="button" class="${cls}" disabled title="No valid mobile number">${inner}</button>`;
-  return `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener" data-wa="${esc(o.id)}" data-kind="${kind || ""}" ${extra || ""}>${inner}</a>`;
+  const lk = (kind === "track" || (kind !== "confirm" && o.awb)) && tkLocked(o.id); // this message is being sent by itself right now: no second one by hand
+  return `<a class="${cls}${lk ? " locked" : ""}"${lk ? ' aria-disabled="true"' : ""} href="${esc(href)}" target="_blank" rel="noopener" data-wa="${esc(o.id)}" data-kind="${kind || ""}" ${extra || ""}>${inner}</a>`;
 }
+// A tracking button that is locked (its message is waiting to go, or going, by itself) does nothing when tapped.
+document.addEventListener("click", e => {
+  const a = e.target.closest("a[data-wa]"); if (!a) return; const o = orders[a.dataset.wa]; if (!o) return;
+  if ((a.dataset.kind === "track" || (a.dataset.kind !== "confirm" && o.awb)) && tkLocked(o.id)) { e.preventDefault(); e.stopPropagation(); toast("WhatsApp Auto is sending this one. Wait a moment, or press Stop first."); }
+}, true);
 // When a WhatsApp link is tapped: let the link open the chat, and also copy the label picture (if dispatched) and remember it was sent.
 document.addEventListener("click", e => {
   const a = e.target.closest("a[data-wa]"); if (!a) return; const o = orders[a.dataset.wa]; if (!o) return;
   { // the label picture is copied every time, ready to paste in the chat
     try { if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) navigator.clipboard.write([new ClipboardItem({ "image/png": labelBlob(o) })]).then(() => toast(isTouch() ? "Label copied: long-press the message box → Paste to add it." : "Label copied: press Ctrl+V in the chat to add it."), () => {}); } catch (x) {}
-    setTimeout(() => { if (o.awb) markSent(o); if (route() === "dispatch") vDispatch(); else if (route() === "dashboard") vDashboard(); }, 400);
+    setTimeout(() => { if (o.awb) markSent(o); if (route() === "dashboard") vDashboard(); tkRefresh(); }, 400); // small in-place updates: on Dispatch the redraw used to wipe AWB numbers typed for the next parcels
   }
 });
-function markSent(o) { if (orders[o.id] && !orders[o.id].trackingSentAt) patch(o.id, { trackingSentAt: new Date().toISOString() }); }
+function markSent(o) { // remembers what was sent by hand: the first time, and again when the number was corrected after the customer got the old one
+  const cur = orders[o.id]; if (!cur) return; const sig = trackSig(cur);
+  if (!cur.trackingSentAt) patch(o.id, { trackingSentAt: new Date().toISOString(), trackingVia: "", trackingMsgId: "", trackingTry: "", trackingSentSig: sig });
+  else if (cur.trackingSentSig !== sig) patch(o.id, { trackingSentAt: new Date().toISOString(), trackingVia: "", trackingMsgId: "", trackingSentSig: sig });
+}
 async function shareLabel(o) {
   const blob = await labelBlob(o); const file = new File([blob], `${o.id}-label.png`, { type: "image/png" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -387,7 +408,7 @@ async function labelsPDF(list) {
 }
 const pdfName = list => `labels-${today()}-${list.length}.pdf`;
 // A label counts as done once it is printed, downloaded or shared, so bulk PDFs only contain NEW labels.
-function markLabelsDone(list) { const now = new Date().toISOString(); list.forEach(o => { if (orders[o.id] && !orders[o.id].printedAt) patch(o.id, { printedAt: now }); }); }
+function markLabelsDone(list) { const now = new Date().toISOString(); list.forEach(o => { if (orders[o.id] && !orders[o.id].printedAt) patch(o.id, { printedAt: now }); }); offerReady(list.map(o => o.id)); }
 async function downloadLabels(list) {
   if (!list.length) return; toast("Making PDF of " + list.length + " label" + (list.length > 1 ? "s" : "") + "…");
   const blob = await labelsPDF(list); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = pdfName(list); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
@@ -460,12 +481,361 @@ function trackingMessage(o) {
 function templates(o) {
   const b = brandById(o.brand); const first = (o.name || "").split(" ")[0]; const items = itemsText(o); const p = prodPhrase(o);
   const t = [[o.awb ? "Order + tracking" : "Order message", trackingMessage(o)]];
+  t.push(["Getting ready", readyMessage(o)]);
   if (!o.paid) t.push(["Ask for payment", `Hi ${first}, your order for ${p} (${o.id}) is ready.\n\nPlease pay with Google Pay / any UPI app${b.upi ? " to " + b.upi : ""} and send the payment screenshot. We ship as soon as payment is received.`]);
   if (o.status === "ofd") t.push(["Out for delivery", `Hi ${first}, your ${p} ${pcs(o) > 1 ? "are" : "is"} out for delivery today${o.courier ? " with " + o.courier : ""}. Please keep your phone reachable.`]);
   t.push(["How to use", `Hi ${first}, we hope your ${p} reached you safely!\n\nQuick tips: patch test first, apply a small amount on clean skin, and use sunscreen in the day.\n\nAny questions, just reply here.`]);
   t.push(["Ask for review", `Hi ${first}, how are you finding your ${p}? A short honest reply (and a photo, if you like) really helps us. Thank you!`]);
   return t.map(([n, m]) => [n, m.includes(signoff()) ? m : m + "\n\n" + signoff()]);
 }
+
+/* ------------------------------------------------------------------ "your order is getting ready" (after printing labels) */
+function readyMessage(o) {
+  const first = (o.name || "").split(" ")[0];
+  return [first ? `Hi ${first} 🌸` : "Hi 🌸", "",
+    `*Your order is getting ready!* 📦`, "",
+    `Order: *${o.id}*`,
+    ...(o.items || []).map(i => `   • ${i.qty} x ${i.name}`), "",
+    `We are packing it with care right now. As soon as the courier picks it up, we will send you the tracking number here.`, "",
+    signoff()].join("\n");
+}
+// who still needs telling: parcel not dispatched yet, not told before, and a valid mobile number
+function needsReady(o) { return !!o && !o.deleted && !o.readySentAt && !o.trackingSentAt && TOSHIP.includes(o.status) && phone10(o.phone).length === 10; }
+// labels printed today whose customer has not been told yet
+function readyDue() { const t = today(); return live().filter(o => needsReady(o) && o.printedAt && localISO(new Date(o.printedAt)) === t).sort((a, b) => a.printedAt.localeCompare(b.printedAt)); }
+/* ---- automatic WhatsApp (through Meta or AiSensy). Your site's /api/wa sends the approved message; this page only asks it to. ---- */
+const autoWaOn = () => online() && settings.autoWa !== false; // needs the Online storage login; can be switched off in Settings
+const waUrl = () => device.sheetUrl.replace(/\/api\/sync$/, "/api/wa");
+async function callWa(payload, ms) { // asks your site's /api/wa. Never waits for ever. e.unsure = "it may have gone through"
+  const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 20000);
+  const bad = (msg, unsure) => { const x = new Error(msg); x.unsure = unsure; return x; };
+  try {
+    let r;
+    try { r = await fetch(waUrl(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: device.sheetKey, ...payload }), signal: c.signal }); }
+    catch (e) { throw bad(c.signal.aborted ? "Your site did not answer in time." : "Could not reach your site.", true); }
+    let j = null; try { j = await r.json(); } catch (e) { if (c.signal.aborted) throw bad("Your site did not answer in time.", true); }
+    if (!j) throw bad(r.status === 404 ? "Automatic WhatsApp is not added to your site yet." : "Your site did not answer properly (" + r.status + ").", r.status !== 404);
+    return j;
+  } finally { clearTimeout(t); }
+}
+let waChk = { at: 0, ok: null, msg: "" };
+// who sends the messages for this site: "aisensy" or "meta" ("" = not known yet). Only used to word the notes in plain language.
+const waWho = () => waChk.via === "aisensy" ? "AiSensy" : waChk.via === "meta" ? "Meta" : "WhatsApp";
+const waTo = () => waChk.via ? " to " + waWho() : ""; // "not connected" + this + " yet"
+const waViaTag = () => waChk.via === "aisensy" ? "aisensy" : "meta"; // what an order remembers when WhatsApp Auto sent it
+async function waReady(force) { // is WhatsApp connected on the site? Asks, without sending anything. (Each message has its own switch in Settings; this only needs the online login.)
+  if (!online()) return false;
+  if (!force && waChk.ok !== null && Date.now() - waChk.at < (waChk.ok ? 600000 : 20000)) return waChk.ok;
+  // track = the site's api/wa.js is the newer one that also knows the tracking message. An older one does not say so, and then tracking is never sent through it.
+  try { const j = await callWa({ ping: true }, 8000); waChk = { at: Date.now(), ok: !!(j.ok && j.ready), track: j.track === true, msg: j.ok ? "" : (j.error || ""), num: j.number || "", name: j.name || "", via: j.via === "aisensy" || j.via === "meta" ? j.via : "" }; }
+  catch (e) { waChk = { at: Date.now(), ok: false, track: false, msg: e.message || "", via: waChk.via || "" }; }
+  return waChk.ok;
+}
+// the three blanks in the approved message: first name, order number, items
+const readyParts = o => { const c = s => String(s || "").replace(/\s+/g, " ").trim(); return { name: c((o.name || "").split(" ")[0]) || "there", order: o.id, items: c(itemsText(o)) || "your order" }; };
+// readyTry = "a send was started and I never saw the answer". Such an order is never sent by itself again (it may already have reached the customer).
+const needsAuto = o => needsReady(o) && !o.readyTry;
+
+let ntTimer = null, ntClose = null, ntRunning = false, ntQueue = [];
+const ntCount = () => (ui.nt || []).map(id => orders[id]).filter(o => o && needsAuto(o)).length;
+const ntWaitHead = () => { const n = ntCount(); return `✓ Labels printed. WhatsApp goes to ${n} customer${n === 1 ? "" : "s"} in ${ui.ntLeft}…`; };
+function startAuto(ids, wait) { // wait = a few seconds to press Stop first (used right after printing)
+  if (ntRunning) { ntQueue = [...new Set([...ntQueue, ...ids])]; renderNt(); return; } // sending right now: these go next
+  const keep = ui.ntAuto && ui.ntPhase === "wait" ? (ui.nt || []) : []; // a second print during the countdown joins the same round
+  clearInterval(ntTimer); clearTimeout(ntClose);
+  ui.nt = [...new Set([...keep, ...ids])].filter(id => needsReady(orders[id])); ui.ntAuto = true; ui.ntSt = {}; ui.ntErr = {}; ui.ntNote = "";
+  if (!ui.nt.length) { renderNt(); return; }
+  if (!wait || !ntCount()) { runAuto(ui.nt.slice()); return; }
+  ui.ntPhase = "wait"; ui.ntLeft = 5; renderNt();
+  ntTimer = setInterval(() => {
+    ui.ntLeft--;
+    if (ui.ntLeft <= 0) { clearInterval(ntTimer); runAuto(ui.nt.slice()); return; }
+    const h = document.querySelector("#ntbar h2"); if (h) h.textContent = ntWaitHead(); // only the number changes, so the Stop button is never rebuilt under a finger
+  }, 1000);
+}
+async function runAuto(ids) {
+  if (ntRunning) return; ntRunning = true;
+  ui.ntPhase = "run"; ui.ntLeft = 0; renderNt();
+  let stopAll = "";
+  try {
+    for (const id of ids) {
+      const o = orders[id]; if (!o || !needsReady(o)) continue;
+      if (o.readyTry) { ui.ntSt[id] = "unsure"; continue; } // an earlier try may have gone through: that one is left to the owner
+      if (stopAll) { ui.ntSt[id] = "fail"; ui.ntErr[id] = stopAll; continue; }
+      ui.ntSt[id] = "sending"; renderNt();
+      patch(id, { readyTry: new Date().toISOString() }); // written BEFORE sending: a closed tab or a lost reply can then never lead to a second automatic message
+      let j, down = false;
+      try { j = await callWa({ to: phone10(o.phone), ...readyParts(o) }, 20000); }
+      catch (e) { down = true; j = { ok: false, unsure: !!e.unsure, error: e.message || "Could not reach your site." }; }
+      if (j.ok) { patch(id, { readySentAt: new Date().toISOString(), readyVia: waViaTag(), readyMsgId: j.id || "", readyTry: "" }); ui.ntSt[id] = "ok"; }
+      else {
+        ui.ntSt[id] = j.unsure ? "unsure" : "fail"; ui.ntErr[id] = j.error || "Not sent.";
+        if (!j.unsure) patch(id, { readyTry: "" }); // a clear "no": safe to try this one again later
+        if (j.fatal || j.setup || j.unsure || down) { // the same trouble would hit everyone: don't keep trying the rest
+          stopAll = j.fatal || j.setup || (down && !j.unsure) ? ui.ntErr[id] : down ? "Your site is not answering, so this one was not tried." : waWho() + " is not answering, so this one was not tried.";
+          if (!j.tpl && !TEMPLATE_CODES.includes(Number(j.code))) waChk = { at: Date.now(), ok: false, track: waChk.track, via: waChk.via, msg: stopAll }; // a template problem only hurts that one message
+        }
+      }
+      renderNt();
+    }
+  } catch (e) { /* never leave the box stuck */ }
+  finally { ntRunning = false; ui.ntPhase = "done"; }
+  renderNt();
+  const q = ntQueue.filter(id => !ids.includes(id) && needsReady(orders[id])); ntQueue = [];
+  if (!q.length && ids.every(id => !orders[id] || orders[id].readySentAt)) { clearTimeout(ntClose); ntClose = setTimeout(() => { if (ui.ntPhase === "done" && !ntRunning) { ui.nt = []; renderNt(); } }, 9000); }
+  if (route() === "dashboard") vDashboard();
+  if (q.length) startAuto(q, true); // labels printed while this round was sending
+}
+function showManual(ids) { // the one-tap way (used when automatic sending is off, not connected yet, or was stopped)
+  if (ntRunning) return; // a round is sending right now; these stay on Today under "Tell N customers"
+  const keep = ui.ntAuto && ui.ntPhase === "wait" ? (ui.nt || []) : [];
+  clearInterval(ntTimer);
+  ui.nt = [...new Set([...keep, ...ids])]; ui.ntAuto = false; ui.ntPhase = "";
+  ui.ntNote = settings.autoWa === false ? "" : !online() ? "Automatic sending works from your own site (see Settings → Automatic WhatsApp)." : "Automatic WhatsApp is not connected" + waTo() + " yet.";
+  renderNt();
+}
+async function offerReady(ids) { // called right after labels are printed
+  const add = [...new Set(ids)].filter(id => needsReady(orders[id])); if (!add.length) return;
+  if (autoWaOn() && await waReady()) startAuto(add, true); else showManual(add);
+}
+async function tellDue(ids) { if (autoWaOn() && await waReady()) startAuto(ids, false); else showManual(ids); }
+
+function ntRow(o) {
+  const st = (ui.ntSt || {})[o.id], err = (ui.ntErr || {})[o.id], done = !!o.readySentAt;
+  const unsure = !done && (st === "unsure" || (!st && !!o.readyTry));
+  const queued = ui.ntAuto && !done && !unsure && (ui.ntPhase === "wait" || (ui.ntPhase === "run" && !st));
+  const act = done ? `<span class="tag t-upi">${o.readySkip ? "Skipped" : "Sent ✓"}</span>`
+    : st === "sending" ? `<span class="wait">Sending…</span>`
+    : queued ? `<span class="wait">Waiting…</span>`
+    : `<button type="button" class="btn sm ghost" data-ntskip="${esc(o.id)}">Skip</button><a class="btn sm" href="${esc(waLink(o.phone, readyMessage(o)))}" target="_blank" rel="noopener" data-wr="${esc(o.id)}">${WA_ICON} WhatsApp</a>`;
+  const note = done ? "" : unsure ? `<span class="err">Not sure: ${esc(err || "an earlier try may have gone through, so it is not sent again by itself.")}</span>` : err ? `<span class="err">Not sent: ${esc(err)}</span>` : "";
+  return `<li class="nt-row${done ? " done" : ""}"><div style="min-width:0"><b>${esc(o.name)}</b><span class="meta">${esc(prodPhrase(o))} · <span class="mono">${esc(fmtPhone(o.phone))}</span></span>${note}</div>
+    <div class="nt-act">${act}</div></li>`;
+}
+function renderNt() {
+  const el = $("#ntbar"); if (!el) return;
+  const list = (ui.nt || []).map(id => orders[id]).filter(o => o && (o.readySentAt || needsReady(o)));
+  if (!list.length) { el.hidden = true; el.innerHTML = ""; return; }
+  const todo = list.filter(o => !o.readySentAt), next = todo[0], n = list.length, sent = n - todo.length, s = k => k === 1 ? "" : "s";
+  const stOf = o => (ui.ntSt || {})[o.id], nUnsure = todo.filter(o => stOf(o) === "unsure" || (!stOf(o) && o.readyTry)).length, nFail = todo.length - nUnsure;
+  let head, hint = "", main = "";
+  if (ui.ntAuto && ui.ntPhase === "wait") {
+    head = ntWaitHead();
+    hint = "Sent by itself through WhatsApp Business. Press Stop if you cancelled the print.";
+    main = `<button type="button" class="btn hi sendbtn" data-ntstop>Stop, don't send</button>`;
+  } else if (ui.ntAuto && ui.ntPhase === "run") {
+    head = `Sending WhatsApp… ${sent} of ${n}`; hint = "Please keep this page open." + (ntQueue.length ? ` ${ntQueue.length} more will go after this.` : "");
+  } else if (ui.ntAuto) {
+    head = todo.length ? [`${sent} sent`, nFail ? `${nFail} not sent` : "", nUnsure ? `${nUnsure} not sure` : ""].filter(Boolean).join(", ") : `✓ WhatsApp sent to ${n} customer${s(n)}`;
+    hint = todo.length ? "For these, tap WhatsApp to send by hand." + (nUnsure ? " “Not sure” means " + waWho() + " did not answer in time. It may have gone through, so only send by hand if the customer says it did not arrive." : "") : "";
+  } else {
+    head = "✓ Labels printed. Tell your customers";
+    hint = (ui.ntNote ? ui.ntNote + " " : "") + "One tap opens WhatsApp with “your order is getting ready” already typed. Just press Send there.";
+    main = next ? `<a class="btn hi sendbtn" href="${esc(waLink(next.phone, readyMessage(next)))}" target="_blank" rel="noopener" data-wr="${esc(next.id)}">${WA_ICON} Send to next: ${esc(next.name)} (${todo.length} left)</a>` : `<p class="nt-info" style="color:var(--ok)">✓ All customers told.</p>`;
+  }
+  const closeBtn = ui.ntAuto && ui.ntPhase === "run" ? "" : `<button type="button" class="btn sm ghost" data-ntclose>${ui.ntAuto && ui.ntPhase === "wait" ? "Cancel" : "Close"}</button>`;
+  el.hidden = false;
+  el.innerHTML = `<div class="nt-head"><div><h2>${head}</h2>${hint ? `<p class="hint" style="margin:3px 0 0">${esc(hint)}</p>` : ""}</div>${closeBtn}</div>
+    ${main}<ul class="nt-list">${list.map(ntRow).join("")}</ul>`;
+}
+document.addEventListener("click", e => {
+  const w = e.target.closest("a[data-wr]");
+  if (w) { const id = w.dataset.wr; setTimeout(() => { if (orders[id] && !orders[id].readySentAt) patch(id, { readySentAt: new Date().toISOString(), readyTry: "" }); renderNt(); if (route() === "dashboard") vDashboard(); }, 400); return; }
+  const s = e.target.closest("[data-ntskip]");
+  if (s) { patch(s.dataset.ntskip, { readySentAt: new Date().toISOString(), readySkip: true, readyTry: "" }); renderNt(); if (route() === "dashboard") vDashboard(); return; }
+  if (e.target.closest("[data-ntstop]")) { clearInterval(ntTimer); ui.ntAuto = false; ui.ntPhase = ""; ui.ntNote = "Stopped. Nothing was sent."; renderNt(); return; }
+  if (e.target.closest("[data-ntclose]")) { if (ui.ntAuto && ui.ntPhase === "wait") { clearInterval(ntTimer); ui.ntAuto = false; ui.ntPhase = ""; toast("Cancelled. Nothing was sent."); } ui.nt = []; renderNt(); }
+});
+
+/* ------------------------------------------------------------------ "your order is on the way" (after "Save & mark dispatched") */
+/* Same safety rules as the label message: the "tried" mark is written BEFORE sending, a send that may have gone through is never repeated
+   by itself, trouble that would hit every customer stops the rest of the round, and there are a few seconds to press Stop first.
+   Nothing here redraws the Orders or Dispatch page while it works (that would wipe tracking numbers typed for the next parcels):
+   only small spots are updated in place (tkSync). */
+// who still needs the tracking message: on the way, has a tracking number, not told yet, not skipped, valid mobile number
+const needsTrack = o => !!o && !o.deleted && !!o.awb && ONROAD.includes(o.status) && !o.trackingSentAt && !o.trackingSkip && phone10(o.phone).length === 10;
+// trackingTry = "a send was started and I never saw the answer". Such an order is never sent by itself again (it may already have reached the customer).
+const needsTkAuto = o => needsTrack(o) && !o.trackingTry;
+// tracking saved today and the customer not told yet (the "Send tracking to N" button on Today)
+function trackDue() { const t = today(); return live().filter(o => needsTrack(o) && o.trackSavedAt && localISO(new Date(o.trackSavedAt)) === t).sort((a, b) => a.trackSavedAt.localeCompare(b.trackSavedAt)); }
+const autoTrackOn = () => online() && settings.autoTrack !== false; // needs the Online storage login; has its own switch in Settings
+// the six blanks of the approved message: first name, order number, items, courier, tracking number, tracking link
+function trackParts(o) {
+  const c = s => String(s || "").replace(/\s+/g, " ").trim();
+  const awb = String(o.awb || "").replace(/\s+/g, ""); // the same spaceless number goes into the blank and into the link
+  let link = c(trackLink({ ...o, awb }));
+  if (link && !/^https?:\/\//i.test(link) && /^[a-z0-9-]+(\.[a-z0-9-]+)+([/?#]|$)/i.test(link)) link = "https://" + link; // typed as www.… without https://
+  return { kind: "track", name: c((o.name || "").split(" ")[0]) || "there", order: o.id, items: c(itemsText(o)) || "your order", courier: c(o.courier), awb, link };
+}
+// what the customer's message says about THIS parcel: courier, number and a link typed for this order (not the courier's page from Settings: changing that is not news for the customer)
+const trackSig = o => [String(o.courier || "").replace(/\s+/g, " ").trim(), String(o.awb || "").replace(/\s+/g, ""), String(o.trackUrl || "").replace(/\s+/g, " ").trim()].join("|");
+// Meta's "this message template is missing or does not match": that only hurts the tracking message, so the label message stays marked as working
+const TEMPLATE_CODES = [132000, 132001, 132007, 132012, 132015, 132016, 132018];
+
+let tkTimer = null, tkClose = null, tkRunning = false, tkQueue = [];
+const tkRetry = new Set(); // saved again while the round runs, after this customer already got a clear "no": tried once more when the round is over
+const tkHold = new Set(); // saved just now, still finding out whether it can go by itself: its hand-send button waits
+function tkLocked(id) { // true while this order's tracking message is waiting to go, or going, by itself
+  if (tkHold.has(id) || tkQueue.includes(id)) return true;
+  if (tkRunning && ui.tkAuto && (ui.tkSt || {})[id] === "sending") return true; // its request is out right now (the "tried" mark is already written, so the check below no longer sees it)
+  const o = orders[id]; if (!ui.tkAuto || !o || !needsTkAuto(o) || !(ui.tk || []).includes(id)) return false;
+  return ui.tkPhase === "wait" || (ui.tkPhase === "run" && !(ui.tkSt || {})[id]);
+}
+const tkCount = () => (ui.tk || []).map(id => orders[id]).filter(o => o && needsTkAuto(o)).length;
+const tkWaitHead = () => { const n = tkCount(); return `✓ Tracking saved. WhatsApp goes to ${n} customer${n === 1 ? "" : "s"} in ${ui.tkLeft}…`; };
+const tkDay = iso => dmy(localISO(new Date(iso)));
+// the little status line next to a tracking button (def = what it says when nothing has happened yet)
+function tkText(o, def) {
+  if (o.trackingSentAt) {
+    const base = o.trackingVia ? `✓ Sent by WhatsApp Auto · ${tkDay(o.trackingSentAt)}` : `✓ Sent ${tkDay(o.trackingSentAt)}`;
+    return o.trackingSentSig && o.trackingSentSig !== trackSig(o) ? base + ". The tracking changed after that. Tap Send on WhatsApp to send the new one." : base;
+  }
+  if (tkLocked(o.id)) return "WhatsApp Auto is sending this…";
+  if (o.trackingTry) return "Not sure if it went through. Ask the customer before sending again.";
+  return def || "";
+}
+const tkChip = (o, def) => `<span class="hint" data-tkst="${esc(o.id)}" data-def="${esc(def || "")}">${esc(tkText(o, def))}</span>`;
+// the "Send to next" button under "Just dispatched" on the Dispatch page
+function dispNext(done) {
+  const unsent = done.filter(o => !o.trackingSentAt && phone10(o.phone).length === 10), free = unsent.filter(o => !tkLocked(o.id));
+  if (!unsent.length) return `<span class="hint">✓ Tracking sent to everyone in this list.</span>`;
+  if (!free.length) return `<span class="hint">WhatsApp Auto is sending the tracking…</span>`;
+  return waAnchor(free[0], "btn primary", `${WA_ICON} Send to next: ${esc(free[0].name)} (${free.length} left)`, "track");
+}
+function tkSync() { // small in-place updates only: lock buttons, status lines and "Send to next". Never a redraw, so typed AWB numbers stay.
+  document.querySelectorAll("a[data-wa]").forEach(a => {
+    const o = orders[a.dataset.wa]; if (!o) return;
+    const lk = (a.dataset.kind === "track" || (a.dataset.kind !== "confirm" && !!o.awb)) && tkLocked(o.id);
+    a.classList.toggle("locked", lk); if (lk) a.setAttribute("aria-disabled", "true"); else a.removeAttribute("aria-disabled");
+  });
+  document.querySelectorAll("[data-tkst]").forEach(el => { const o = orders[el.dataset.tkst]; if (o) { const t = tkText(o, el.dataset.def); if (el.textContent !== t) el.textContent = t; } });
+  const nx = document.querySelector("[data-tknext]"); if (nx) nx.innerHTML = dispNext(dispLists().done);
+}
+function tkRefresh() { tkSync(); if (!(ui.tkAuto && ui.tkPhase === "wait")) renderTk(); } // (not while counting down: the Stop button is never rebuilt under a finger)
+
+function startTrack(ids, wait) { // wait = a few seconds to press Stop first (used right after saving)
+  ids.forEach(id => tkHold.delete(id));
+  if (tkRunning) { ids.forEach(id => { if ((ui.tkSt || {})[id] === "fail") tkRetry.add(id); }); tkQueue = [...new Set([...tkQueue, ...ids])]; renderTk(); tkSync(); return; } // sending right now: these go next
+  const keep = ui.tkAuto && ui.tkPhase === "wait" ? (ui.tk || []) : []; // a second save during the countdown joins the same round
+  clearInterval(tkTimer); clearTimeout(tkClose);
+  ui.tk = [...new Set([...keep, ...ids])].filter(id => needsTrack(orders[id])); ui.tkAuto = true; ui.tkSt = {}; ui.tkErr = {}; ui.tkNote = "";
+  if (!ui.tk.length) { renderTk(); tkSync(); return; }
+  if (!wait || !tkCount()) { runTrack(ui.tk.slice()); return; }
+  ui.tkPhase = "wait"; ui.tkLeft = 8; renderTk(); tkSync();
+  tkTimer = setInterval(() => {
+    ui.tkLeft--;
+    if (ui.tkLeft <= 0) { clearInterval(tkTimer); runTrack(ui.tk.slice()); return; }
+    const h = document.querySelector("#tkbar h2"); if (h) h.textContent = tkWaitHead(); // only the number changes, so the Stop button is never rebuilt under a finger
+  }, 1000);
+}
+async function runTrack(ids) {
+  if (tkRunning) return; tkRunning = true;
+  ui.tkPhase = "run"; ui.tkLeft = 0; renderTk(); tkSync();
+  let stopAll = "";
+  try {
+    for (const id of ids) {
+      const o = orders[id]; if (!o || !needsTrack(o)) continue; // sent by hand, skipped, deleted or its tracking number removed meanwhile
+      if (o.trackingTry) { ui.tkSt[id] = "unsure"; continue; } // an earlier try may have gone through: that one is left to the owner
+      if (stopAll) { ui.tkSt[id] = "fail"; ui.tkErr[id] = stopAll; continue; }
+      ui.tkSt[id] = "sending"; renderTk(); tkSync();
+      const parts = trackParts(o), sig = trackSig(o); // read right now, so a number corrected during the countdown is the one sent
+      patch(id, { trackingTry: new Date().toISOString() }); // written BEFORE sending: a closed tab or a lost reply can then never lead to a second automatic message
+      let j, down = false;
+      try { j = await callWa({ to: phone10(o.phone), ...parts }, 20000); }
+      catch (e) { down = true; j = { ok: false, unsure: !!e.unsure, error: e.message || "Could not reach your site." }; }
+      if (j.ok) {
+        patch(id, { trackingSentAt: new Date().toISOString(), trackingVia: waViaTag(), trackingMsgId: j.id || "", trackingTry: "", trackingSentSig: sig }); ui.tkSt[id] = "ok";
+        if (orders[id] && trackSig(orders[id]) !== sig) toast(`Tracking changed while sending. ${(o.name || "").split(" ")[0]} got the old one. Tap Send on WhatsApp to send the new one.`);
+      }
+      else {
+        ui.tkSt[id] = j.unsure ? "unsure" : "fail"; ui.tkErr[id] = j.error || "Not sent.";
+        if (!j.unsure) patch(id, { trackingTry: "" }); // a clear "no": safe to try this one again later
+        if (j.fatal || j.setup || j.unsure || down) { // the same trouble would hit everyone: don't keep trying the rest
+          stopAll = j.fatal || j.setup || (down && !j.unsure) ? ui.tkErr[id] : down ? "Your site is not answering, so this one was not tried." : waWho() + " is not answering, so this one was not tried.";
+          if (!j.tpl && !TEMPLATE_CODES.includes(Number(j.code))) waChk = { at: Date.now(), ok: false, track: waChk.track, via: waChk.via, msg: stopAll };
+        }
+      }
+      renderTk(); tkSync();
+    }
+  } catch (e) { /* never leave the box stuck */ }
+  finally { tkRunning = false; ui.tkPhase = "done"; }
+  renderTk();
+  const q = tkQueue.filter(id => (!ids.includes(id) || tkRetry.has(id)) && needsTrack(orders[id])); tkQueue = []; tkRetry.clear(); tkSync();
+  if (!q.length && ids.every(id => !orders[id] || orders[id].trackingSentAt)) { clearTimeout(tkClose); tkClose = setTimeout(() => { if (ui.tkPhase === "done" && !tkRunning) { ui.tk = []; renderTk(); } }, 9000); }
+  if (route() === "dashboard") vDashboard();
+  if (q.length) startTrack(q, true); // saved while this round was sending
+}
+function showManualTrack(ids, note) { // the one-tap way (used when automatic sending is off, not connected yet, was stopped, or the Today button is pressed)
+  if (tkRunning) return; // a round is sending right now; these stay on Today under "Send tracking to N"
+  const keep = ui.tkAuto && ui.tkPhase === "wait" ? (ui.tk || []) : [];
+  clearInterval(tkTimer);
+  ui.tk = [...new Set([...keep, ...ids])]; ui.tkAuto = false; ui.tkPhase = ""; ui.tkNote = note || ""; ui.tkSt = {}; ui.tkErr = {};
+  renderTk(); tkSync();
+}
+async function offerTrack(ids) { // called right after tracking numbers are saved
+  const add = [...new Set(ids)].filter(id => needsTrack(orders[id])); if (!add.length) return;
+  if (!autoTrackOn()) return; // switched off, or no online storage: the hand-send buttons are right there
+  add.forEach(id => tkHold.add(id)); tkSync();
+  setTimeout(() => { let any = false; add.forEach(id => { if (tkHold.delete(id)) any = true; }); if (any) tkSync(); }, 12000); // never leave a button locked if the answer is lost
+  let ready = false;
+  try { ready = await waReady(); } catch (e) { ready = false; }
+  if (ready && waChk.track) { startTrack(add, true); return; }
+  add.forEach(id => tkHold.delete(id)); tkSync();
+  toast(ready ? "Tracking by itself needs the newest api/wa.js on your site (see the setup steps). Tap Send on WhatsApp for now." // connected, but the site has the older file
+    : "WhatsApp Auto is not connected right now, so nothing was sent by itself. Tap Send on WhatsApp for this one.");
+}
+async function tellTrackDue(ids) { // the "Send tracking to N" button on Today
+  try { await Promise.race([syncNow(true), new Promise(r => setTimeout(r, 4000))]); } catch (e) { /* offline: go on with what this device knows */ } // another phone may have told them already
+  ids = ids.filter(id => needsTrack(orders[id])); if (!ids.length) { if (route() === "dashboard") vDashboard(); return; }
+  if (autoTrackOn() && (await waReady()) && waChk.track) { startTrack(ids, false); return; }
+  showManualTrack(ids, settings.autoTrack === false ? "" : !online() ? "Automatic sending works from your own site (see Settings → Automatic WhatsApp)." : waChk.ok && !waChk.track ? "Tracking by itself needs the newest api/wa.js on your site." : "Automatic WhatsApp is not connected" + waTo() + " yet.");
+}
+function tkRow(o) {
+  const st = (ui.tkSt || {})[o.id], err = (ui.tkErr || {})[o.id], sent = !!o.trackingSentAt, skipped = !sent && !!o.trackingSkip;
+  const unsure = !sent && !skipped && (st === "unsure" || (!st && !!o.trackingTry));
+  const queued = ui.tkAuto && !sent && !skipped && !unsure && (ui.tkPhase === "wait" || (ui.tkPhase === "run" && !st));
+  const act = sent ? `<span class="tag t-upi">Sent ✓</span>` : skipped ? `<span class="tag t-upi">Skipped</span>`
+    : st === "sending" ? `<span class="wait">Sending…</span>`
+    : queued ? `<span class="wait">Waiting…</span>`
+    : `<button type="button" class="btn sm ghost" data-tkskip="${esc(o.id)}">Skip</button>${waAnchor(o, "btn sm", `${WA_ICON} WhatsApp`, "track")}`;
+  const note = sent || skipped ? "" : unsure ? `<span class="err">Not sure: ${esc(err || "an earlier try may have gone through, so it is not sent again by itself.")}</span>` : err ? `<span class="err">Not sent: ${esc(err)}</span>` : "";
+  return `<li class="nt-row${sent || skipped ? " done" : ""}"><div style="min-width:0"><b>${esc(o.name)}</b><span class="meta">${esc(o.courier || "Courier")} <span class="mono">${esc(o.awb)}</span> · <span class="mono">${esc(fmtPhone(o.phone))}</span></span>${note}</div>
+    <div class="nt-act">${act}</div></li>`;
+}
+function renderTk() {
+  const el = $("#tkbar"); if (!el) return;
+  const list = (ui.tk || []).map(id => orders[id]).filter(o => o && (o.trackingSentAt || o.trackingSkip || needsTrack(o)));
+  if (!list.length) { el.hidden = true; el.innerHTML = ""; return; }
+  const gone = o => !!o.trackingSentAt || !!o.trackingSkip;
+  const todo = list.filter(o => !gone(o)), next = todo[0], n = list.length, sent = list.filter(o => o.trackingSentAt).length, s = k => k === 1 ? "" : "s";
+  const stOf = o => (ui.tkSt || {})[o.id], nUnsure = todo.filter(o => stOf(o) === "unsure" || (!stOf(o) && o.trackingTry)).length, nFail = todo.length - nUnsure;
+  let head, hint = "", main = "";
+  if (ui.tkAuto && ui.tkPhase === "wait") {
+    head = tkWaitHead();
+    hint = "Sent by itself through WhatsApp Business. Press Stop if you typed a wrong tracking number.";
+    main = `<button type="button" class="btn hi sendbtn" data-tkstop>Stop, don't send</button>`;
+  } else if (ui.tkAuto && ui.tkPhase === "run") {
+    head = `Sending WhatsApp… ${sent} of ${n}`; hint = "Please keep this page open." + (tkQueue.length ? ` ${tkQueue.length} more will go after this.` : "");
+  } else if (ui.tkAuto) {
+    head = todo.length ? [`${sent} sent`, nFail ? `${nFail} not sent` : "", nUnsure ? `${nUnsure} not sure` : ""].filter(Boolean).join(", ") : (sent ? `✓ Tracking sent to ${sent} customer${s(sent)}` : "Nothing more to send");
+    hint = todo.length ? "For these, tap WhatsApp to send by hand." + (nUnsure ? " “Not sure” means " + waWho() + " did not answer in time. It may have gone through, so only send by hand if the customer says it did not arrive." : "") : "";
+  } else {
+    head = "Send the tracking number to your customers";
+    hint = (ui.tkNote ? ui.tkNote + " " : "") + "One tap opens WhatsApp with the tracking message already typed. Just press Send there.";
+    main = next ? waAnchor(next, "btn hi sendbtn", `${WA_ICON} Send to next: ${esc(next.name)} (${todo.length} left)`, "track") : `<p class="nt-info" style="color:var(--ok)">✓ All customers told.</p>`;
+  }
+  const closeBtn = ui.tkAuto && ui.tkPhase === "run" ? "" : `<button type="button" class="btn sm ghost" data-tkclose>${ui.tkAuto && ui.tkPhase === "wait" ? "Cancel" : "Close"}</button>`;
+  el.hidden = false;
+  el.innerHTML = `<div class="nt-head"><div><h2>${head}</h2>${hint ? `<p class="hint" style="margin:3px 0 0">${esc(hint)}</p>` : ""}</div>${closeBtn}</div>
+    ${main}<ul class="nt-list">${list.map(tkRow).join("")}</ul>`;
+}
+document.addEventListener("click", e => {
+  const s = e.target.closest("[data-tkskip]");
+  if (s) { patch(s.dataset.tkskip, { trackingSkip: true, trackingTry: "" }); tkRefresh(); if (route() === "dashboard") vDashboard(); return; }
+  if (e.target.closest("[data-tkstop]")) { clearInterval(tkTimer); ui.tkAuto = false; ui.tkPhase = ""; ui.tkNote = "Stopped. Nothing was sent."; renderTk(); tkSync(); return; }
+  if (e.target.closest("[data-tkclose]")) { if (ui.tkAuto && ui.tkPhase === "wait") { clearInterval(tkTimer); ui.tkAuto = false; ui.tkPhase = ""; toast("Cancelled. Nothing was sent."); } ui.tk = []; renderTk(); tkSync(); return; }
+  if (e.target.closest("#tkbar a[data-wa]")) setTimeout(tkRefresh, 450); // after the hand-send handler has marked it sent
+});
 
 /* ------------------------------------------------------------------ refill reminders */
 function productDays(o) {
@@ -659,10 +1029,10 @@ function vDashboard() {
   const unprinted = toShip.filter(o => !o.printedAt);
   const printedWaiting = toShip.filter(o => o.printedAt).sort((x, y) => (y.createdAt || "").localeCompare(x.createdAt || ""));
   const brandName = device.brand === "all" ? "All brands" : brandById(device.brand).name;
-  const refills = refillDue();
+  const refills = refillDue(); const due = readyDue(); const tdue = trackDue();
   $("#view").innerHTML = `
   <div class="head"><div><h1>Today · ${new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}</h1><p class="sub">${esc(brandName)}</p></div>
-    <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${unprinted.length ? `<button class="btn" id="dlall" type="button" title="One PDF with only the ${unprinted.length} new label(s) not yet printed or downloaded">⬇ PDF · ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share one PDF with the new labels">↗ Share PDF</button>` : ""}</div></div>
+    <div class="actions"><a class="btn hi" href="#new">+ New order</a>${unprinted.length ? `<button class="btn primary" id="printall">Print ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button>` : ""}${unprinted.length ? `<button class="btn" id="dlall" type="button" title="One PDF with only the ${unprinted.length} new label(s) not yet printed or downloaded">⬇ PDF · ${unprinted.length} new label${unprinted.length > 1 ? "s" : ""}</button><button class="btn" id="shareall" type="button" title="Share one PDF with the new labels">↗ Share PDF</button>` : ""}${due.length ? `<button class="btn" id="ntopen" type="button" title="WhatsApp: your order is getting ready">${WA_ICON} Tell ${due.length} customer${due.length > 1 ? "s" : ""}</button>` : ""}${tdue.length ? `<button class="btn" id="tkopen" type="button" title="WhatsApp: your order is on the way (tracking number)">${WA_ICON} Send tracking to ${tdue.length}</button>` : ""}</div></div>
   <div id="pushbanner"></div>
   ${printedWaiting.length ? `<section class="card reprint" aria-labelledby="h-reprint"><div class="reprint-head"><div><h2 id="h-reprint">Label already printed · not dispatched yet (${printedWaiting.length})</h2><p class="hint">These are not in the PDF above. Tap ＋ to put one back, or add them all.</p></div>${printedWaiting.length > 1 ? `<button class="btn sm" type="button" id="reprintall">Add all ${printedWaiting.length} back</button>` : ""}</div>
     <ul class="reprint-list">${printedWaiting.map(o => `<li><b>${esc(o.name)}</b><span>${esc(itemsText(o))}</span><button class="btn sm hi" type="button" data-reprint="${esc(o.id)}" aria-label="Add ${esc(o.name)} back to the PDF">＋ Add back</button></li>`).join("")}</ul></section>` : ""}
@@ -698,6 +1068,8 @@ function vDashboard() {
   const rpa = $("#reprintall"); if (rpa) rpa.onclick = () => { printedWaiting.forEach(o => patch(o.id, { printedAt: "" })); toast(`${printedWaiting.length} labels added back to the PDF`); vDashboard(); };
   document.querySelectorAll("[data-reprint]").forEach(b => b.onclick = () => { const o = orders[b.dataset.reprint]; if (!o) return; patch(o.id, { printedAt: "" }); toast(o.name.split(" ")[0] + " added back to the PDF"); vDashboard(); });
   const sha2 = $("#shareall"); if (sha2) sha2.onclick = () => shareLabels(unprinted);
+  const nto = $("#ntopen"); if (nto) nto.onclick = () => tellDue(due.map(o => o.id));
+  const tko = $("#tkopen"); if (tko) tko.onclick = () => tellTrackDue(tdue.map(o => o.id));
   $("#formcopy").onclick = () => copyText(ORDER_LINK(), "Order form link copied ✓");
 }
 function ago(iso) {
@@ -918,8 +1290,8 @@ function orderCard(o) {
       <div class="f"><label>Weight (g)</label><input data-a="weight" inputmode="numeric" value="${esc(o.weight || "")}"></div></div>
     <div class="row"><div class="f"><label>UPI ref / UTR</label><input data-a="utr" value="${esc(o.utr || "")}"></div><label class="check" style="align-self:end;padding-bottom:10px"><input type="checkbox" data-a="paid" ${o.paid ? "checked" : ""}> Payment received</label></div>
     <div class="lbl">WhatsApp ${esc((o.name || "").split(" ")[0])}</div>
-    ${ui.justShipped === o.id ? `<div class="sendnow"><b>Tracking saved.</b> Send to ${esc((o.name || "").split(" ")[0])} (${esc(fmtPhone(o.phone))}) in one tap: ${SEND_BTN(o, "primary")}</div>` : ""}
-    <div class="wa">${templates(o).map(([n, t]) => `<a href="${waLink(o.phone, t)}" target="_blank" rel="noopener">${n}</a>`).join("")}</div>
+    ${ui.justShipped === o.id ? `<div class="sendnow"><b>Tracking saved.</b> Send to ${esc((o.name || "").split(" ")[0])} (${esc(fmtPhone(o.phone))}) in one tap: ${SEND_BTN(o, "primary")} ${tkChip(o, "")}</div>` : ""}
+    <div class="wa">${templates(o).map(([n, t]) => `<a href="${waLink(o.phone, t)}" target="_blank" rel="noopener"${n === "Getting ready" ? ` data-wr="${esc(o.id)}"` : ""}>${n}</a>`).join("")}</div>
     <div class="preview">${ui.open.has(o.id) ? labelHTML(o) : ""}</div>
     <div class="actions"><button class="btn sm" data-a="edit">Edit order</button><button class="btn sm" data-a="dup">Repeat order</button><button class="btn sm danger" data-a="del">Delete</button></div>
   </div></details></article>`;
@@ -934,7 +1306,7 @@ function trackBlock(o) {
   return `<div class="track"><div class="trk-head"><div><span class="lbl">Tracking</span><div class="trk-awb"><span>${esc(o.courier || "Courier")}</span><b class="mono">${esc(o.awb)}</b></div>
       <span class="hint">Dispatched ${o.shippedAt ? dmy(o.shippedAt.slice(0, 10)) : "—"}</span></div>
       <div class="actions">${trackLink(o) ? `<a class="btn sm" href="${esc(trackLink(o))}" target="_blank" rel="noopener">Open tracking</a>` : ""}<button class="btn sm" data-a="copyawb" type="button">Copy AWB</button><button class="btn sm" data-png="${esc(o.id)}" type="button">Label image</button><button class="btn sm" data-a="track" type="button">Edit</button></div></div>
-    <div class="sendrow">${SEND_BTN(o)}${o.trackingSentAt ? `<span class="hint">✓ Sent ${dmy(localISO(new Date(o.trackingSentAt)))}</span>` : `<span class="hint">Opens ${esc((o.name || "").split(" ")[0])}'s chat (${esc(fmtPhone(o.phone))}) with the tracking message ready.</span>`}</div>
+    <div class="sendrow">${SEND_BTN(o)}${tkChip(o, `Opens ${(o.name || "").split(" ")[0]}'s chat (${fmtPhone(o.phone)}) with the tracking message ready.`)}</div>
     <ol class="steps-t">${steps.map(([k, n], i) => `<li class="${i <= idx ? "done" : ""}"><button type="button" data-a="step" data-s="${k}">${n}</button><small>${at(k)}</small></li>`).join("")}</ol></div>`;
 }
 function dispatchForm(o) {
@@ -952,7 +1324,14 @@ function saveDispatch(id, root) {
   const courier = tickedCourier("dc-" + id); const date = g("date") || today();
   const p = { awb, courier, trackUrl: g("url"), weight: Number(g("weight")) || o.weight || 0, shippedAt: date + "T" + new Date().toTimeString().slice(0, 8) };
   if (TOSHIP.includes(o.status)) p.status = "shipped";
-  patch(id, p); return true;
+  const before = trackSig(o), after = trackSig({ ...o, awb, courier, trackUrl: p.trackUrl});
+  const changedAfterSent = !!o.trackingSentAt && !!o.awb && (o.trackingSentSig || before) !== after; // the customer already has the old number
+  // Only a parcel dispatched NOW, an order that had no tracking number yet, or a fix to today's tracking that the customer has not got yet is offered to WhatsApp Auto.
+  // Editing an older order (weight, a typo in its number) never re-stamps it, so old dispatched orders are never sent by itself.
+  const stampedToday = !!o.trackSavedAt && localISO(new Date(o.trackSavedAt)) === today();
+  const fresh = !ONROAD.includes(o.status) || !o.awb || (stampedToday && before !== after && !o.trackingSentAt); // (no number before: nothing could have been sent yet)
+  if (fresh) { p.trackSavedAt = new Date().toISOString(); p.trackingSkip = false; } // a new number is a new decision: an earlier "Skip" no longer applies
+  patch(id, p); return changedAfterSent ? "changed" : fresh ? "offer" : "saved";
 }
 function listClick(e) {
   const x = e.target.closest("[data-a]"); if (!x) return; const card = x.closest(".ord"); if (!card) return; const id = card.dataset.id; const o = orders[id]; const a = x.dataset.a;
@@ -960,7 +1339,7 @@ function listClick(e) {
   if (a === "label" || a === "slip") printDocs([o], a);
   if (a === "track") { ui.dispatch = id; ui.open.add(id); vOrders(); const f = document.querySelector(`[data-dform="${CSS.escape(id)}"] [data-d="awb"]`); if (f) f.focus(); return; }
   if (a === "dcancel") { ui.dispatch = null; vOrders(); return; }
-  if (a === "dsave") { const wasNew = TOSHIP.includes(o.status); if (saveDispatch(id, x.closest("[data-dform]"))) { ui.dispatch = null; if (wasNew) { ui.dispHi = id; ui.dispAll = false; ui.dq = ""; toast(o.name.split(" ")[0] + " moved to Dispatch ✓"); location.hash = "#dispatch"; } else { toast("Tracking updated for " + id); vOrders(); } } return; } // newly dispatched orders leave Orders and go to Dispatch
+  if (a === "dsave") { const wasNew = TOSHIP.includes(o.status); const r = saveDispatch(id, x.closest("[data-dform]")); if (r) { ui.dispatch = null; if (wasNew) { ui.dispHi = id; ui.dispAll = false; ui.dq = ""; toast(o.name.split(" ")[0] + " moved to Dispatch ✓"); location.hash = "#dispatch"; } else { toast(r === "changed" ? "Tracking changed. " + (o.name || "").split(" ")[0] + " already got the old one. Tap Send on WhatsApp to send the new one." : "Tracking updated for " + id); vOrders(); } if (r === "offer") offerTrack([id]); } return; } // newly dispatched orders leave Orders and go to Dispatch
   if (a === "step") { const s2 = x.dataset.s; if (o.status !== s2) { patch(id, { status: s2 }); toast(o.name.split(" ")[0] + ": " + stName(s2)); vOrders(); } return; }
   if (a === "unprint") { patch(id, { printedAt: "" }); toast(o.name.split(" ")[0] + " is back in the bulk labels"); vOrders(); return; }
   if (a === "copyawb") { navigator.clipboard && navigator.clipboard.writeText(o.awb).then(() => toast("AWB copied"), () => toast(o.awb)); return; }
@@ -986,10 +1365,9 @@ function exportCSV() {
 }
 
 /* ---- dispatch: add tracking for many parcels at once ---- */
-function vDispatch() {
-  const list = live().filter(inBrand).filter(o => TOSHIP.includes(o.status)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // oldest (most late) first
-  // Every order with tracking added goes here automatically (dispatched in the last 7 days, newest first),
-  // whether the AWB was added on this page or on the order itself.
+// Every order with tracking added goes under "Dispatched" automatically (dispatched in the last 7 days, newest first),
+// whether the AWB was added on the Dispatch page or on the order itself. One rule, used by the page and by the in-place refresh of its buttons.
+function dispLists() {
   const wk = localISO(new Date(Date.now() - 6 * 864e5));
   const allDone = live().filter(inBrand).filter(o => ONROAD.includes(o.status) && o.awb)
     .sort((a, b) => (b.shippedAt || "").localeCompare(a.shippedAt || ""));
@@ -997,6 +1375,11 @@ function vDispatch() {
   const done = allDone.filter(o => dq ? [o.id, o.name, o.phone, o.awb, o.pin].some(v => String(v || "").toLowerCase().includes(dq))
     : ui.dispAll || (o.shippedAt || o.updatedAt || "").slice(0, 10) >= wk);
   const older = allDone.length - allDone.filter(o => (o.shippedAt || o.updatedAt || "").slice(0, 10) >= wk).length;
+  return { allDone, dq, done, older };
+}
+function vDispatch() {
+  const list = live().filter(inBrand).filter(o => TOSHIP.includes(o.status)).sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // oldest (most late) first
+  const { allDone, dq, done, older } = dispLists();
   $("#view").innerHTML = `<div class="head"><div><h1>Dispatch</h1><p class="sub">Add courier and AWB for each parcel you hand over. Press Enter to jump to the next row (works with a barcode scanner).</p></div>
     <div class="f"><label>Courier for all rows</label><select id="allcour"><option value="">Choose…</option>${COURIERS.map(c => `<option>${esc(c)}</option>`).join("")}</select></div></div>
   ${list.length ? `<div class="tbl"><table class="dt"><thead><tr><th>Order</th><th>Customer</th><th>Pincode</th><th>Payment</th><th>Courier</th><th>AWB / consignment no.</th></tr></thead><tbody>${list.map(o => { const b = brandById(o.brand); return `<tr data-id="${esc(o.id)}"${daysLate(o) ? ' class="late-row"' : ""}><td><span class="tag t-brand" style="--bc:${b.color}">${esc(b.prefix)}</span> <span class="mono">${esc(o.id)}</span>${daysLate(o) ? `<div><span class="late-tag">${lateText(daysLate(o))}</span></div>` : ""}</td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td class="mono">${esc(o.pin)}<div class="hint">${esc(o.city)}</div></td><td>${payTag(o)}</td>
@@ -1005,16 +1388,16 @@ function vDispatch() {
   : `<div class="empty"><h2>Nothing waiting to dispatch</h2><p>Orders that are new, paid or packed appear here.</p></div>`}
   ${allDone.length ? `<div class="card stack" style="margin-top:16px"><div class="head" style="margin:0"><div><h2>Dispatched · ${dq ? "search" : ui.dispAll ? "all" : "last 7 days"} <span class="tag t-transit">${done.length}</span></h2><p class="hint" style="margin:0">Orders move here automatically as soon as tracking is added, and stay here.</p></div>
     <input type="search" id="dq" placeholder="Search name, phone or AWB" value="${esc(ui.dq || "")}" aria-label="Search dispatched" style="max-width:260px"></div>
-    ${!done.length ? `<p class="hint">Nothing matches.</p>` : ""}<div class="tbl"><table><tbody>${done.map(o => `<tr${ui.dispHi === o.id ? ' class="hi-row"' : ""}><td class="mono">${esc(o.id)}<div class="hint">${ui.dispHi === o.id ? "<b>Just now</b>" : o.shippedAt ? dmy(o.shippedAt.slice(0, 10)) : ""}</div></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td>${esc(o.courier || "")} <span class="mono">${esc(o.awb)}</span></td><td>${SEND_BTN(o, "sm hi")}${o.trackingSentAt ? ` <span class="hint">✓ sent</span>` : ""}</td></tr>`).join("")}</tbody></table></div><div class="actions">${done.some(o => !o.trackingSentAt) ? waAnchor(done.find(o => !o.trackingSentAt), "btn primary", `${WA_ICON} Send to next: ${esc(done.find(o => !o.trackingSentAt).name)} (${done.filter(o => !o.trackingSentAt).length} left)`, "track") : `<span class="hint">✓ Tracking sent to everyone in this list.</span>`}${!dq && older ? `<button class="btn sm" id="dall" type="button">${ui.dispAll ? "Show last 7 days only" : `Show all dispatched (${older} older)`}</button>` : ""}<a class="btn sm" href="#orders">See all orders</a></div></div>` : ""}`;
+    ${!done.length ? `<p class="hint">Nothing matches.</p>` : ""}<div class="tbl"><table><tbody>${done.map(o => `<tr${ui.dispHi === o.id ? ' class="hi-row"' : ""}><td class="mono">${esc(o.id)}<div class="hint">${ui.dispHi === o.id ? "<b>Just now</b>" : o.shippedAt ? dmy(o.shippedAt.slice(0, 10)) : ""}</div></td><td><b>${esc(o.name)}</b><div class="hint">${esc(itemsText(o))}</div></td><td>${esc(o.courier || "")} <span class="mono">${esc(o.awb)}</span></td><td>${SEND_BTN(o, "sm hi")} ${tkChip(o, "")}</td></tr>`).join("")}</tbody></table></div><div class="actions"><span data-tknext>${dispNext(done)}</span>${!dq && older ? `<button class="btn sm" id="dall" type="button">${ui.dispAll ? "Show last 7 days only" : `Show all dispatched (${older} older)`}</button>` : ""}<a class="btn sm" href="#orders">See all orders</a></div></div>` : ""}`;
   const rows = [...document.querySelectorAll(".dt tbody tr")];
   rows.forEach((tr, i) => { const w = tr.querySelector("[data-w]"); w.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); const n = rows[i + 1]; if (n) n.querySelector("[data-w]").focus(); else $("#dsaveall").focus(); } }; });
   if ($("#allcour")) $("#allcour").onchange = e => rows.forEach(tr => { const s = tr.querySelector("[data-c]"); if (!s.value) s.value = e.target.value; });
   if ($("#dsaveall")) $("#dsaveall").onclick = () => {
     const saved = [];
     rows.forEach(tr => { const id = tr.dataset.id; const awb = tr.querySelector("[data-w]").value.trim().toUpperCase(); if (!awb) return;
-      patch(id, { awb, courier: tr.querySelector("[data-c]").value, status: "shipped", shippedAt: today() + "T" + new Date().toTimeString().slice(0, 8) }); saved.push(id); });
+      patch(id, { awb, courier: tr.querySelector("[data-c]").value, status: "shipped", shippedAt: today() + "T" + new Date().toTimeString().slice(0, 8), trackSavedAt: new Date().toISOString(), trackingSkip: false }); saved.push(id); });
     if (!saved.length) { toast("Type or scan at least one AWB number."); return; }
-    ui.dispatched = [...new Set([...(ui.dispatched || []), ...saved])]; toast(`Dispatched ${saved.length} order${saved.length > 1 ? "s" : ""}`); vDispatch(); };
+    ui.dispatched = [...new Set([...(ui.dispatched || []), ...saved])]; toast(`Dispatched ${saved.length} order${saved.length > 1 ? "s" : ""}`); vDispatch(); offerTrack(saved); };
   if ($("#dall")) $("#dall").onclick = () => { ui.dispAll = !ui.dispAll; vDispatch(); };
   if ($("#dq")) $("#dq").oninput = e => { ui.dq = e.target.value; const pos = e.target.selectionStart; vDispatch(); const n = $("#dq"); n.focus(); n.setSelectionRange(pos, pos); };
   const first = document.querySelector(".dt [data-w]"); if (first && !ui.dq) first.focus();
@@ -1124,6 +1507,13 @@ function vSettings() {
       <p class="hint">The PIN locks this device's screen. It is a simple lock, not encryption.</p>
       <h2 style="margin-top:10px">Backup file</h2>
       <div class="actions"><button class="btn" id="bk">Download backup (.json)</button><label class="btn">Restore backup<input type="file" id="rs" accept=".json" hidden></label></div></div>
+    <div class="card stack"><h2>Automatic WhatsApp</h2>
+      <p class="hint" id="wast">${online() ? "Checking…" : "Works from your own site only. Connect it under Online storage first."}</p>
+      <label class="check"><input type="checkbox" id="sauwa" ${settings.autoWa !== false ? "checked" : ""}> Send “your order is getting ready” by itself when I print a label</label>
+      <label class="check"><input type="checkbox" id="sautk" ${settings.autoTrack !== false ? "checked" : ""}> Send the tracking number by itself when I press “Save &amp; mark dispatched”</label>
+      <div class="f"><label for="watest">Test: send to my own number</label><input id="watest" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number"></div>
+      <div class="actions"><button class="btn" id="watestgo" type="button"${online() ? "" : " disabled"}>Test “getting ready”</button><button class="btn" id="watesttk" type="button"${online() ? "" : " disabled"}>Test tracking</button></div>
+      <p class="hint">Goes through the official WhatsApp Business: Meta directly, or a partner such as AiSensy. It needs a one-time setup on your site (see the setup steps): two approved messages, “getting ready” and “on the way”.</p></div>
   </div>`;
   const B = $("#brands");
   B.oninput = B.onchange = e => {
@@ -1145,6 +1535,27 @@ function vSettings() {
   refreshPushUI();
   $("#addbrand").onclick = () => { const id = "b" + uid(); settings.brands.push({ id, name: "New brand", prefix: "NB", color: "#444444", tagline: "", site: "", upi: "", gstin: "", from: { ...RETURN }, products: [] }); settings.updatedAt = new Date().toISOString(); saveSettings(); vSettings(); };
   $("#sauto").onchange = e => { settings.autoForm = e.target.checked; settings.updatedAt = new Date().toISOString(); saveSettings(); toast(e.target.checked ? "Form orders will be added automatically" : "Form orders will wait on Today for you to tap Create order"); };
+  const waShow = (ok, m) => { const el = $("#wast"); if (el) el.innerHTML = (ok ? "✓ " : "✗ ") + esc(m); };
+  $("#sauwa").onchange = e => { settings.autoWa = e.target.checked; settings.updatedAt = new Date().toISOString(); saveSettings(); toast(e.target.checked ? "Automatic WhatsApp is on" : "Automatic WhatsApp is off. You will tap to send."); };
+  $("#sautk").onchange = e => { settings.autoTrack = e.target.checked; settings.updatedAt = new Date().toISOString(); saveSettings(); toast(e.target.checked ? "Tracking will go by itself" : "Tracking will not go by itself. You will tap to send."); };
+  if (online()) waReady(true).then(ok => waShow(ok, ok ? (waChk.via === "aisensy" ? "AiSensy is set up on your site. Messages go from your AiSensy WhatsApp number. Press a Test button below to check that it works." : "Connected to Meta" + (waChk.name ? " as " + waChk.name : "") + (waChk.num ? " (" + waChk.num + ")" : "") + ". Messages go from this WhatsApp number." + (waChk.track ? "" : " But your site has the older api/wa.js, so the tracking number cannot go by itself yet. Put the newest api/wa.js on your site (see the setup steps).")) : "Not connected" + waTo() + " yet. " + (waChk.msg || "")));
+  $("#watestgo").onclick = async () => {
+    const to = phone10($("#watest").value); if (to.length !== 10) { toast("Enter your own 10-digit mobile number."); return; }
+    const b = $("#watestgo"); b.disabled = true; b.textContent = "Sending…";
+    try { const j = await callWa({ to, name: "Test", order: "TEST" + today().replace(/-/g, "").slice(2), items: "1 x Sample cream 30g" }); waShow(!!j.ok, j.ok ? "Test sent to " + fmtPhone(to) + ". Check WhatsApp on that phone." : (j.unsure ? "Not sure if the test went through. " : "") + (j.error || "Not sent.")); }
+    catch (e) { waShow(false, e.message || "Could not reach your site."); }
+    b.disabled = false; b.textContent = "Test “getting ready”";
+  };
+  $("#watesttk").onclick = async () => {
+    const to = phone10($("#watest").value); if (to.length !== 10) { toast("Enter your own 10-digit mobile number."); return; }
+    const b = $("#watesttk"); b.disabled = true; b.textContent = "Sending…";
+    try {
+      if (!(await waReady(true))) waShow(false, "Not connected" + waTo() + " yet. " + (waChk.msg || ""));
+      else if (!waChk.track) waShow(false, "Your site has the older api/wa.js, which cannot send the tracking message. Put the newest api/wa.js on your site (see the setup steps).");
+      else { const j = await callWa({ kind: "track", to, name: "Test", order: "TEST" + today().replace(/-/g, "").slice(2), items: "1 x Sample cream 30g", courier: "DTDC", awb: "D12345678", link: trackPage("DTDC") }); waShow(!!j.ok, j.ok ? "Test tracking sent to " + fmtPhone(to) + ". Check WhatsApp on that phone." : (j.unsure ? "Not sure if the test went through. " : "") + (j.error || "Not sent.")); }
+    } catch (e) { waShow(false, e.message || "Could not reach your site."); }
+    b.disabled = false; b.textContent = "Test tracking";
+  };
   $("#srefill").onchange = () => { settings.refillDays = Math.max(7, Number($("#srefill").value) || 30); settings.updatedAt = new Date().toISOString(); saveSettings(); toast("Saved"); };
   $("#ssign").onchange = () => { settings.signoff = $("#ssign").value.trim() || "With love, Team skinday.in 💛"; settings.updatedAt = new Date().toISOString(); saveSettings(); toast("Sign-off saved"); };
   document.querySelectorAll("[data-tp]").forEach(i => i.onchange = () => { settings.trackPages = { ...(settings.trackPages || {}), [i.dataset.tp]: i.value.trim() || TRACK_PAGES[i.dataset.tp] }; settings.updatedAt = new Date().toISOString(); saveSettings(); toast(i.dataset.tp + " tracking page saved"); });

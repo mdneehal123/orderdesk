@@ -1,11 +1,11 @@
 // Order Desk — makes the WHOLE site private.
 // You sign in once on the /login screen; the app remembers you for 180 days (secure cookie).
-// Public (no login): the customer order form (/form), its two APIs, the login screen and the app icons.
+// Public (no login): the customer order form (/form), its two APIs, the login screen, the app icons and /api/wa-hook (Meta's WhatsApp webhook check; it stores and sends nothing).
 // Password: ORDER_DESK_PASSWORD from Vercel → Settings → Environment Variables.
 export const config = { matcher: "/:path*" };
 
 const PUBLIC = [/^\/form(\/.*)?$/, /^\/api\/form$/, /^\/api\/catalog$/, /^\/login(\/.*)?$/, /^\/api\/login$/,
-  /^\/manifest\.webmanifest$/, /^\/sw\.js$/, /^\/api\/summary$/, /^\/icons\/.*$/, /^\/robots\.txt$/, /^\/favicon\.ico$/];
+  /^\/manifest\.webmanifest$/, /^\/sw\.js$/, /^\/api\/summary$/, /^\/api\/wa-hook$/, /^\/icons\/.*$/, /^\/robots\.txt$/, /^\/favicon\.ico$/];
 
 async function hmacHex(key, msg) {
   const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
